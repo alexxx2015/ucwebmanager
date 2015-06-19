@@ -2,6 +2,7 @@ package com.example.mysampleapp;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -42,10 +43,12 @@ public class MysampleappUI extends UI
 	protected void init(VaadinRequest request) 
 	{
 		ServletContext serv= VaadinServlet.getCurrent().getServletContext();
-		String conneciton=serv.getInitParameter("conneciton");
-		System.out.println(conneciton);
+		String PropertFilePath=serv.getInitParameter("propertyfilePath");
+		
 		navigator.addView("",new Main(this));
-		navigator.addView("NextPage", new NextPage(this));
+		
+			navigator.addView("NextPage", new NextPage(this));
+		
 		navigator.addView("Instrumentation", new Instrumentation(this));
 		navigator.addView("Runtime", new RuntimeAnalysis(this));
 		

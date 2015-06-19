@@ -3,18 +3,36 @@ package com.example.mysampleapp;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
+
+import org.sqlite.JDBC;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+
+
+
+
+
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -40,10 +58,11 @@ import com.vaadin.ui.Upload.SucceededListener;
 import com.vaadin.ui.renderers.ButtonRenderer;
 
 @SuppressWarnings("serial")
-@Theme("NextPage")
+@Theme("mysampleapp")
 public class NextPage extends GridLayout implements View , Receiver, SucceededListener
 {  MysampleappUI mainObj;
 FileInfo fileinfoObj;
+Connection conn=null;
   
 
 
@@ -51,19 +70,47 @@ FileInfo fileinfoObj;
 	public   NextPage(MysampleappUI objmain) 
 	{ 
 		mainObj=objmain;
-		setRows(12);
+		setRows(18);
 		setColumns(8);
 		setSizeFull();setMargin(true);
+		addStyleName("backColorGrey");
 		Label lblwelcome=new Label("Welcome ");
 		Button btnnext=new Button("Next");
 		Button btnprev=new Button("Prev");
 		Button btnupload=new Button("upload");
+		
+		btnnext.setStyleName("v-button");
+		btnprev.setStyleName("v-button");
 		 List<List<String>> Files = new ArrayList<List<String>>();
+		 
+		 
+		try
+		{   Properties prop = new Properties();
+			
+			String propFileName = "Config.properties";
+			 
+			InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+			prop.load(inputStream);
+			String dbpath = prop.getProperty("databasepath");
+			System.out.println("database path is "+dbpath);
+			// set the properties value
+			prop.setProperty("database", "localhost");
+			prop.setProperty("dbuser", "mkyong");
+			prop.setProperty("dbpassword", "password");
 
- 		// Have a container of some type to contain the data
- 			
- 		 try
-		 {
+			// save properties to project root folder
+			//prop.store(output, null);
+			DatabaseConnection db=new DatabaseConnection();
+		 conn=db.Createconnection("jdbc:sqlite:C:/Users/subash/Documents/HiwiApp/Analysisdb.sqlite");
+		 Statement statement = conn.createStatement();
+		 statement.setQueryTimeout(30);  // set timeout to 30 sec.	
+		 
+		 //statement.executeUpdate("insert into Staticanalysis values('program5',DateTime('now'), 'Not Yet Started')");		
+		 ResultSet rs = statement.executeQuery("select * from Staticanalysis");	
+
+ 		// Have a container of some type to contain the data			
+ 		 
+		 
 		System.out.println("file read start"); 
 		 BeanItemContainer<FileInfo> filedata =	 new BeanItemContainer<>(FileInfo.class);
 		 DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -118,13 +165,24 @@ FileInfo fileinfoObj;
 
 
          }//end of for loop with s var
+         while(rs.next())
+		 {
+		  
+		  rs.getString("Name");
+		  rs.getString("status");
+		  rs.getString("time");
+		  Files.add(Arrays.asList(rs.getString("Name"), rs.getString("status"),rs.getString("time")));
+		 }
 
 
 		 }
-		 catch(IOException | SAXException | ParserConfigurationException   ex)
+		 catch(IOException | SAXException | ParserConfigurationException  ex)
 		 {
 			 System.out.println(ex.getMessage());
-		 }
+		 } catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		//ends
  		//BeanItemContainer<FileInfo> containerFiles =  new BeanItemContainer<FileInfo>(FileInfo.class, Files);
@@ -139,6 +197,7 @@ FileInfo fileinfoObj;
 		gridmain.setLocale(Locale.GERMANY);
 		gridmain.setEditorEnabled(true);
 		gridmain.setSizeFull();
+		
 		List<String> listaction=new ArrayList<String>();
 		listaction.add("Static Analysis");
 		listaction.add("Instrumentation");
@@ -150,8 +209,8 @@ FileInfo fileinfoObj;
 		gridmain.addColumn("Proceed", String.class);
 		gridmain.addColumn("Time", String.class);
 		//FileUploader receiver = new ImageUploader(); 
-		Upload uploadFile = new Upload();
-			
+		Upload uploadFile = new Upload("Upload",this);
+		uploadFile.addSucceededListener(this);	
 		
 		//upload.addSucceededListener(receiver);
 		gridmain.getColumn("Name").setEditable(false);
@@ -177,13 +236,13 @@ FileInfo fileinfoObj;
 						
 				String value=(String)gridmain.getContainerDataSource().getContainerProperty(rowId,"Action").getValue();
 				String filename=(String)gridmain.getContainerDataSource().getContainerProperty(rowId,"Name").getValue();
-				filename="C:\\Users\\subash\\Documents\\HiwiApp\\9th june\\StaticAnalysis\\9th june09-06-2015 12-17-228533325276181607600.txt";
+				//filename="C:\\Users\\subash\\Documents\\HiwiApp\\9th june\\StaticAnalysis\\9th june09-06-2015 12-17-228533325276181607600.txt";
 				
 				switch (value) {
 				  case "Static Analysis":
 					  System.out.println(value+ "Yeah");
 					  
-					  mainObj.navigator.navigateTo(""); 
+					  mainObj.navigator.navigateTo("/"+filename); 
 				        break;
 				  case "Instrumentation": 
 					  System.out.println(value+ "Yeah");
@@ -193,7 +252,7 @@ FileInfo fileinfoObj;
 				        break;
 				  case "Runtime Analysis":
 					  System.out.println(value+ "Yeah");
-					  mainObj.navigator.navigateTo("Runtime");//not working this navigation
+					  mainObj.navigator.navigateTo("Runtime/"+filename);//not working this navigation
 					  //mainObj.navigator.navigateTo("NextPage");
 				  /*default:
 					  mainObj.navigator.navigateTo(""); 
@@ -219,11 +278,11 @@ FileInfo fileinfoObj;
 				
 		
 		addComponent(lblwelcome,1,0,2,0);
-		addComponent(btnnext,4,3,6,4);
-		addComponent(btnprev,1,3,2,4);
-		addComponent(gridmain,0,5,7,10);
-		addComponent(uploadFile,4,11,7,11);
-		addComponent(btnupload,0,11,2,11);
+		addComponent(btnnext,6,1,7,1);
+		addComponent(btnprev,1,1,2,1);
+		addComponent(gridmain,0,2,7,14);
+		addComponent(uploadFile,4,15,7,15);
+		//addComponent(btnupload,0,7,2,7);
 		
 		btnupload.addClickListener(new Button.ClickListener() 
 		{
@@ -306,28 +365,35 @@ FileInfo fileinfoObj;
 
 
 
-}
-	 public FileOutputStream receiveUpload(String filename, String MIMEType) {
-FileOutputStream fos = null; // Output stream to write to
-File file = new File("/tmp/uploads/" + filename);
+}    @Override
+	 public OutputStream receiveUpload(String filename, String MIMEType) {
+OutputStream fos = null; // Output stream to write to
+File file = new File("UploadFilePath" + filename);
 try {
 // Open the file for writing.
 fos = new FileOutputStream(file);
-} catch (final java.io.FileNotFoundException e) {
+} 
+catch (final java.io.FileNotFoundException e) 
+{
 // Error while opening the file. Not reported here.
 e.printStackTrace();
 return null;
 }
 
 return fos; // Return the output stream to write to
-}
+}    @Override
 	 public void uploadSucceeded(Upload.SucceededEvent event)
 	 {
-	       
+	 Statement statement;
+	try {
+		statement = conn.createStatement();
+		statement.executeUpdate("insert into Staticanalysis values('"+event.getFilename()+"',DateTime('now'), 'Not Yet Started')");
+	} catch (SQLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}  
+	 
 	        
-	        // Display the uploaded file in the image panel.
-	      //  final FileResource imageResource =new FileResource(file, getApplication());
-	       
 	    }
 
 	    // This is called if the upload fails.

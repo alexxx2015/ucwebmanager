@@ -31,6 +31,26 @@
 
 @mixin mysampleapp {
   @include valo;
+  .backColorGrey
+  {
+     background-color:#ACACAC;
+  }
+  .labelwelcome
+ {
+ font-family:Trebuchet MS;
+ font-color:#4455aa;
+ }
+  .v-button 
+  {
+  color: #666666;
+  background-color: #4455aa;
+  border: 1px solid #4455aa;
+  display: inline-block;
+  
+  
+  font-family:Trebuchet MS;
+  font-weight: bold;
+}
 
   // Insert your own theme rules here
 }
