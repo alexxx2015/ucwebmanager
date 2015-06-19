@@ -14,4 +14,4 @@
 /target
 /build
 /build/
-*.class
+/bin/*.class
