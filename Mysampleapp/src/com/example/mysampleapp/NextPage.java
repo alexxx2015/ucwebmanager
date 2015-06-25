@@ -34,6 +34,8 @@ import java.sql.Statement;
 
 
 
+
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -47,19 +49,23 @@ import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Field;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.Upload;
 import com.vaadin.ui.Upload.Receiver;
 import com.vaadin.ui.Upload.SucceededListener;
+import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 
 @SuppressWarnings("serial")
 @Theme("mysampleapp")
-public class NextPage extends GridLayout implements View , Receiver, SucceededListener
+public class NextPage extends VerticalLayout implements View , Receiver, SucceededListener
 {  MysampleappUI mainObj;
 FileInfo fileinfoObj;
 Connection conn=null;
@@ -70,11 +76,11 @@ Connection conn=null;
 	public   NextPage(MysampleappUI objmain) 
 	{ 
 		mainObj=objmain;
-		setRows(18);
-		setColumns(8);
+		//setRows(18);
+		//setColumns(8);
 		setSizeFull();setMargin(true);
 		addStyleName("backColorGrey");
-		Label lblwelcome=new Label("Welcome ");
+		//Label lblwelcome=new Label("Welcome ");
 		Button btnnext=new Button("Next");
 		Button btnprev=new Button("Prev");
 		Button btnupload=new Button("upload");
@@ -214,6 +220,7 @@ Connection conn=null;
 		
 		//upload.addSucceededListener(receiver);
 		gridmain.getColumn("Name").setEditable(false);
+		
 		gridmain.getColumn("Time").setEditable(false);
 		gridmain.getColumn("Status").setEditable(false);
 		gridmain.getColumn("Proceed").setEditable(false);
@@ -277,11 +284,35 @@ Connection conn=null;
 		//read data from xml file and display in grid
 				
 		
-		addComponent(lblwelcome,1,0,2,0);
-		addComponent(btnnext,6,1,7,1);
-		addComponent(btnprev,1,1,2,1);
-		addComponent(gridmain,0,2,7,14);
-		addComponent(uploadFile,4,15,7,15);
+		//addComponent(lblwelcome,1,0,2,0);
+		MenuBar barmenu = new MenuBar();
+		
+		@SuppressWarnings("deprecation")
+		MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
+		MenuBar.MenuItem menura = barmenu.addItem("runtime Analysis", null, null);
+		MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
+		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+
+		
+		
+		setMargin(true);
+		//
+		HorizontalLayout hlayoutmenu=new  HorizontalLayout();
+		hlayoutmenu.setSpacing(true);
+		hlayoutmenu.addComponent(btnprev);		
+		hlayoutmenu.addComponent(barmenu);
+		
+		hlayoutmenu.addComponent(btnnext);
+		hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+		hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		addComponent(hlayoutmenu);
+		//addComponent(btnnext);
+		//addComponent(btnprev);
+		addComponent(gridmain);
+		setComponentAlignment(gridmain, Alignment.MIDDLE_CENTER);
+		addComponent(uploadFile);
+		setComponentAlignment(uploadFile, Alignment.BOTTOM_LEFT);
 		//addComponent(btnupload,0,7,2,7);
 		
 		btnupload.addClickListener(new Button.ClickListener() 

@@ -12,16 +12,20 @@ import java.util.Properties;
 import com.vaadin.annotations.Theme;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.Panel;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
 @Theme("mysampleapp")
-public class RuntimeAnalysis extends GridLayout implements View
+public class RuntimeAnalysis extends VerticalLayout implements View
 {
 	  MysampleappUI mainObj;
 	  static String filename,runtimeoutputpath;
@@ -40,22 +44,49 @@ public class RuntimeAnalysis extends GridLayout implements View
 		 runtimeoutputpath = prop.getProperty("Runtimeoutputpath");
 		Panel pnlparent =new Panel();
 		
-		setRows(12);
-		setColumns(8);
+		/*setRows(12);
+		setColumns(8);*/
 		setSizeFull();
 		setMargin(true);
 		addStyleName("backColorGrey");
 	Button btnrun = new Button("RunTime Analyse");	
-	Button btnmain = new Button("Main");
+	Button btnprev = new Button("Prev");
+	Button btnnext = new Button("Next");
 	TextArea textstaticanalysis=new TextArea("");
 	Label lblWelcome =new Label("Run Time Analysis");
 	textstaticanalysis.setSizeFull();
-	addComponent(lblWelcome,1,0,4,0);
-	addComponent(btnmain,1,1,3,1);
-	addComponent(textstaticanalysis,1,2,6,10);
-	addComponent(btnrun,1,11,3,11);
+//
+	MenuBar barmenu = new MenuBar();
 	
-	btnmain.addClickListener(new Button.ClickListener() 
+	@SuppressWarnings("deprecation")
+	MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
+	MenuBar.MenuItem menura = barmenu.addItem("runtime Analysis", null, null);
+	MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
+	MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+
+	
+	
+	setMargin(true);
+	//
+	HorizontalLayout hlayoutmenu=new  HorizontalLayout();
+	hlayoutmenu.setSpacing(true);
+	hlayoutmenu.addComponent(btnprev);		
+	hlayoutmenu.addComponent(barmenu);
+	
+	hlayoutmenu.addComponent(btnnext);
+	hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+	hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+	hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+	addComponent(hlayoutmenu);
+
+	//
+	//addComponent(lblWelcome);
+	//addComponent(btnprev);
+	addComponent(textstaticanalysis);
+	addComponent(btnrun);
+	hlayoutmenu.setComponentAlignment(btnrun, Alignment.BOTTOM_LEFT);
+	hlayoutmenu.setComponentAlignment(textstaticanalysis, Alignment.MIDDLE_CENTER);
+	btnprev.addClickListener(new Button.ClickListener() 
 	{
 		public void buttonClick(ClickEvent event) 
 		{ 

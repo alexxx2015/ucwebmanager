@@ -19,13 +19,17 @@ import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.MenuBar;
 import com.vaadin.ui.TextArea;
+import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
 @Theme("mysampleapp")
-public class Instrumentation extends GridLayout implements View
+public class Instrumentation extends VerticalLayout implements View
 {    
 	
 	  MysampleappUI mainObj;
@@ -38,8 +42,8 @@ public class Instrumentation extends GridLayout implements View
 		mainObj=objmain;
 		System.out.println("instrumentation reached");	
 		//GridLayout glayout = new GridLayout(8,12);
-		setRows(12);
-		setColumns(8);
+		/*setRows(12);
+		setColumns(8);*/
 		setSizeFull();
 		setMargin(true);
 		Label lblwelcome=new Label("Instrumentation");
@@ -47,8 +51,32 @@ public class Instrumentation extends GridLayout implements View
 		addStyleName("backColorGrey");
 		TextArea textstaticanalysis=new TextArea();
 		textstaticanalysis.setSizeFull();
-		Button btnMain=new Button("Main");
+		Button btnprev=new Button("Prev");
+		Button btnnext=new Button("Next");
 		this.setCaption("Instrumentation Page");
+		//
+		MenuBar barmenu = new MenuBar();
+		@SuppressWarnings("deprecation")
+		MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
+		MenuBar.MenuItem menura = barmenu.addItem("runtime Analysis", null, null);
+		MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
+		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+
+		
+		
+		setMargin(true);
+		//
+		HorizontalLayout hlayoutmenu=new  HorizontalLayout();
+		hlayoutmenu.setSpacing(true);
+		hlayoutmenu.addComponent(btnprev);		
+		hlayoutmenu.addComponent(barmenu);
+		
+		hlayoutmenu.addComponent(btnnext);
+		hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+		hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		addComponent(hlayoutmenu);
+		//
 		
 			
 		
@@ -85,17 +113,17 @@ public class Instrumentation extends GridLayout implements View
         	createDirectory(filename);
         }
     });
-	btnMain.addClickListener(new Button.ClickListener() 
+	btnprev.addClickListener(new Button.ClickListener() 
 	{
 		public void buttonClick(ClickEvent event) 
 		{ 
 			mainObj.navigator.navigateTo("NextPage");
 	       	}
 	});
-	addComponent(lblwelcome,1,0,3,0);
-	addComponent(btnMain,1,1,3,1);
-	addComponent(textstaticanalysis,1,2,6,10);
-	addComponent(btninstrument,1,11,3,11);
+	//addComponent(lblwelcome);
+	
+	addComponent(textstaticanalysis);
+	addComponent(btninstrument);
 	
 
 	}

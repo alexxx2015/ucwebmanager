@@ -1,5 +1,7 @@
 package com.example.mysampleapp;
 
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -18,22 +20,32 @@ import java.util.List;
 import java.util.Properties;
 
 import com.vaadin.annotations.Theme;
+import com.vaadin.client.ui.VContextMenu;
+import com.vaadin.client.ui.menubar.MenuItem;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Field;
+import com.vaadin.ui.FormLayout;
+import com.vaadin.ui.Grid;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.MenuBar;
+import com.vaadin.ui.NativeButton;
+import com.vaadin.ui.Panel;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.Upload;
+import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
 @Theme("mysampleapp")
-public class Main extends GridLayout implements View
+public class Main extends VerticalLayout implements View
 {
 	MysampleappUI mainObj;
 	static String filename,Staticanalysispath;
@@ -44,6 +56,7 @@ public class Main extends GridLayout implements View
 	{
 	}*/
 	
+	@SuppressWarnings("deprecation")
 	public   Main(MysampleappUI o)
 	{		//final VerticalLayout layout = new VerticalLayout();
 //		this.getSession().getConfiguration().getInitParameters();
@@ -91,27 +104,27 @@ public class Main extends GridLayout implements View
 		Label lblcomputechops=new Label("Compute Chops");		
 		Label lblsensitiveness=new Label("Object Sensitiveness");
 		Label lblindirectflows=new Label("Indirect Flows");
-		Label lblname=new Label("Analysis Name");		
-		Label lblmode=new Label("Mode");		
-		Label lblpath=new Label("ClassPath");
-		Label lblsource=new Label("Source and Sinks");
+		//Label lblname=new Label("Analysis Name");		
+		//Label lblmode=new Label("Mode");		
+		//Label lblpath=new Label("ClassPath");
+		//Label lblsource=new Label("Source and Sinks");
 		Label lblthirdpartylib=new Label("ThirdParty Library");
-		Label lblSDGFile=new Label("SDGFile");
-		Label lblCGFile=new Label("CGFile");
-		Label lblReportFile=new Label("Report File");
-		TextField txtSDGFile=new TextField("");
-		TextField txtCGFile=new TextField("");
-		TextField txtReportFile=new TextField("");
+		//Label lblSDGFile=new Label("SDGFile");
+		//Label lblCGFile=new Label("CGFile");
+		//Label lblReportFile=new Label("Report File");
+		TextField txtSDGFile=new TextField("SDGFile");
+		TextField txtCGFile=new TextField("CGFile");
+		TextField txtReportFile=new TextField("Report File");
 		Upload uploadSDGFile = new Upload();
 		//uploadSDGFile.setButtonCaption("Browse");
 		Upload uploadCGFile = new Upload();
 		//uploadCGFile.setButtonCaption("Browse");
 		Upload uploadReportFile = new Upload();
 		//uploadReportFile.setButtonCaption("Browse");
-		TextField txtfldname=new TextField("");
-		TextField txtfldmode=new TextField("");
-		TextField txtfldpath=new TextField("");
-		TextField txtfldthirdpartylib=new TextField("");
+		TextField txtfldname=new TextField("Analysis Name");
+		TextField txtfldmode=new TextField("Mode");
+		TextField txtfldpath=new TextField("Class Path");
+		TextField txtfldthirdpartylib=new TextField("Third Party Library");
 		
 	    Button btnnext = new Button("Next");
 		Button btnprev = new Button("Prev");
@@ -119,51 +132,142 @@ public class Main extends GridLayout implements View
 		Button btnsave = new Button("Save saveconfiguration");
 		Button btnrun = new Button("Run Analysis");
 		Button btnselectsnsFile = new Button("Select sns File");
-				
-		//GridLayout glayout=new GridLayout(8,15);
-		//glayout.set
-		setRows(15);
-		setColumns(8);
-		setSizeFull();
-		//setMargin(true);
+		MenuBar barmenu = new MenuBar();
+		
+		@SuppressWarnings("deprecation")
+		MenuBar.MenuItem menusa = barmenu.addItem( "Home",null, null);
+		MenuBar.MenuItem menura = barmenu.addItem( "Home",null, null);
+		MenuBar.MenuItem menuinstr = barmenu.addItem( "Home",null, null);
+		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+		
+
+		//Button btnruntime =new Button();
+		Button btnruntime = new NativeButton();
+		btnruntime.setSizeFull();
+		Button btnstatic =new Button();
+		btnstatic.setSizeFull();
+		
+		
+		
+		Button btninstrument =new Button();
+		btninstrument.setSizeFull();
+		btnstatic.addStyleName("big");
+		btnruntime.addStyleName("big");
+		btnruntime.setStyleName("borderless");
+		btninstrument.addStyleName("big");
+		
+		setMargin(true);
+		//
+		HorizontalLayout horiprevnext=new HorizontalLayout(); 
+		horiprevnext.addComponent(btnprev);
+		horiprevnext.addComponent(btnnext);
+		horiprevnext.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+		horiprevnext.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		
+		HorizontalLayout hlayoutcore=new HorizontalLayout();
+		
+		
+		VerticalLayout vlayoutmenu=new  VerticalLayout();
+		//vlayoutmenu.setSpacing(true);
+		vlayoutmenu.addComponent(btnstatic);		
+		vlayoutmenu.addComponent(btninstrument);
+		vlayoutmenu.addComponent(btnruntime);
+		vlayoutmenu.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
+		vlayoutmenu.setSpacing(false);
+		//vlayoutmenu.setExpandRatio(btnstatic, );
+		//vlayoutmenu.addComponent();
+		//hlayoutmenu.addComponent(btnnext);
+		HorizontalLayout hlayoutcoreinside=new  HorizontalLayout();
+		Grid gridclasspath=new Grid();
+		gridclasspath.addColumn("Classpath", String.class);
+		gridclasspath.setEditorEnabled(true);
+		gridclasspath.getColumn("Classpath").setEditable(true);
+		//VContextMenu vb=new VContextMenu(); 
+		//VerticalLayout vlaytables=new VerticalLayout();
+		FormLayout fl=new FormLayout();
+		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
+		fl.addComponent(txtfldname);
+		fl.addComponent(txtfldmode);
+		fl.addComponent(txtfldpath);
+		fl.addComponent(gridclasspath);
+		fl.addComponent(txtfldthirdpartylib);
+		
+		fl.addComponent(txtSDGFile);		
+		fl.addComponent(uploadSDGFile);		
+		fl.addComponent(txtCGFile);
+		fl.addComponent(uploadCGFile);		
+		fl.addComponent(txtReportFile);
+		fl.addComponent(uploadReportFile);
+		fl.addComponent(btnselectsnsFile);
+		fl.setMargin(true);
+		//vlaytables.addComponent(fl);		
+		//VerticalLayout vlaychecboxes=new VerticalLayout();
+		//hlayoutcoreinside.addComponent(fl);
+		//hlayoutcoreinside.addComponent(vlaychecboxes);
+		vlayoutmenu.setSizeFull();
+		vlayoutmenu.setMargin(true);
+		
+		hlayoutcore.addComponent(vlayoutmenu);
+		hlayoutcore.addComponent(fl);
+		//hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		//hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+		//hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		
+		
+		
+		//
+		this.setSpacing(true);
+		//this.setExpandRatio(barmenu, 2*1.0f);
+		//this.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		/*HorizontalLayout hlayout=new  HorizontalLayout();
+		hlayout.setWidth("500px");*/
+		
+		/*hlayout.addComponent(chkmultithreaded,0);
+		hlayout.addComponent(lblmultithreaded,1);
+		hlayout.setExpandRatio(lblmultithreaded,3*1.0f);
+		hlayout.addComponent(chkcomputechops,2);
+		hlayout.addComponent(lblcomputechops,3);*/
+		/*hlayout.setExpandRatio(lblcomputechops,2*1.0f);
+		hlayout.addComponent(chksensitiveness,4);
+		hlayout.addComponent(lblsensitiveness,5);
+		hlayout.setExpandRatio(lblsensitiveness,2*1.0f);
+		hlayout.addComponent(chkindirectflows,6);
+		hlayout.addComponent(lblindirectflows,7);
+		hlayout.setExpandRatio(lblindirectflows,2*1.0f);*/
 		addStyleName("backColorGrey");
-		addComponent(lblwelcome,0,0,0,0);
-		addComponent(chkmultithreaded,0,1,0,1);
-		addComponent(lblmultithreaded,1,1,1,1);
-		addComponent(chkcomputechops,2,1,2,1);
-		addComponent(lblcomputechops,3,1,3,1);
-		addComponent(chksensitiveness,4,1,4,1);
-		addComponent(lblsensitiveness,5,1,5,1);
-		addComponent(chkindirectflows,6,1,6,1);
-		addComponent(lblindirectflows,7,1,7,1);
-		addComponent(lblname,0,2,1,2);
-		addComponent(txtfldname,2,2,5,2);
-		addComponent(cmbselectpr,6,2,7,2);
-		addComponent(lblmode,0,3,1,3);
-		addComponent(txtfldmode,2,3,5,3);
-		addComponent(lblpath,0,4,1,4);
-		addComponent(txtfldpath,2,4,5,4);
-		addComponent(lblthirdpartylib,0,5,1,5);
-		addComponent(txtfldthirdpartylib,2,5,5,5);
 		
-		addComponent(lblSDGFile,0,6,1,6);
-		addComponent(txtSDGFile,2,6,5,6);
-		addComponent(uploadSDGFile,6,6,7,6);
-		addComponent(lblCGFile,0,7,1,7);
-		addComponent(txtCGFile,2,7,5,7);
-		addComponent(uploadCGFile,6,7,7,7);
+		addComponent(horiprevnext);
+		addComponent(hlayoutcore);
+		//addComponent(hlayout);
 		
-		addComponent(lblReportFile,0,9,1,9);
-		addComponent(txtReportFile,2,9,5,9);
-		addComponent(uploadReportFile,6,9,7,9);
+		//this.setExpandRatio(hlayout, 1.0f);
+		GridLayout childgrid=new GridLayout(4,8);
+		/*FormLayout fl=new FormLayout();
+		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
+		fl.addComponent(txtfldname);
+		fl.addComponent(txtfldmode);
+		fl.addComponent(txtfldpath);
+		fl.addComponent(txtfldthirdpartylib);
 		
-		addComponent(lblsource,0,10,1,10);		
-		addComponent(btnselectsnsFile,2,10,7,10);		
-		//addComponent(btnload,0,10,2,10);
-		addComponent(btnsave,3,11,4,11);
-		addComponent(btnrun,5,11,6,11);
-		addComponent(btnprev,2,12,4,12);
-		addComponent(btnnext,6,12,7,12);
+		
+		fl.addComponent(txtSDGFile);
+		
+		fl.addComponent(uploadSDGFile);
+		
+		fl.addComponent(txtCGFile);
+		fl.addComponent(uploadCGFile);
+		
+		fl.addComponent(txtReportFile);
+		fl.addComponent(uploadReportFile);
+		fl.addComponent(btnselectsnsFile);
+		*/
+		childgrid.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
+		
+		//childgrid.addComponent(fl);
+		
+		childgrid.addComponent(btnselectsnsFile,1,7,1,7);	
+		//addComponent(childgrid);
+		
 			btnnext.addClickListener(new Button.ClickListener() 
 		{
 			public void buttonClick(ClickEvent event) 
@@ -183,7 +287,39 @@ public class Main extends GridLayout implements View
 				{ createDirectory(filename);
 								       	}
 			});
-			
+			/*MenuBar.Command mycommand = new MenuBar.Command()
+			{
+			    @SuppressWarnings("deprecation")
+				public void menuSelected(MenuItem selectedItem)
+			    {
+			    	String value=(String)gridmain.getContainerDataSource().getContainerProperty(rowId,"Action").getValue();
+			    	selectedItem.
+			    	switch (value) {
+					  case "Static Analysis":
+						  System.out.println(value+ "Yeah");
+						  
+						  mainObj.navigator.navigateTo("/"+filename); 
+					        break;
+					  case "Instrumentation": 
+						  System.out.println(value+ "Yeah");
+						  
+						  mainObj.navigator.navigateTo("Instrumentation/"+filename); 
+						  
+					        break;
+					  case "Runtime Analysis":
+						  System.out.println(value+ "Yeah");
+						  mainObj.navigator.navigateTo("Runtime/"+filename);
+						  
+					}   
+			    }
+
+*/			/*	@Override
+				public void menuSelected(
+						com.vaadin.ui.MenuBar.MenuItem selectedItem) {
+					// TODO Auto-generated method stub
+					
+				}  
+			};*/
 			
 	}
 	protected void createDirectory(String Name)

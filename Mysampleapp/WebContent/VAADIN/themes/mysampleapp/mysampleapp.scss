@@ -33,7 +33,7 @@
   @include valo;
   .backColorGrey
   {
-     background-color:#ACACAC;
+     background-color:#CCCCFF;
   }
   .labelwelcome
  {
@@ -52,5 +52,59 @@
   font-weight: bold;
 }
 
+
+/* BIG white style */
+.v-button-big:focus {
+    background: url(staticbuttonicon.png) 0px 0px;
+}
+
+.v-button-big:focus .v-button-wrap {
+    background: url(staticbuttonicon.png) right 0px;
+}
+
+.v-button-big:active,
+.v-button-big.v-pressed {
+    background: url(staticbuttonicon.png) 0px 0px;
+}
+
+.v-button-big:active .v-button-wrap,
+.v-button-big.v-pressed .v-button-wrap {
+    background: url(staticbuttonicon.png) right 0px;
+}
+
+.v-button-big,
+.v-disabled.v-button-big {
+    background: url(staticbuttonicon.png) 0px 0px;
+    height: 50px;
+    width: 150px;
+    
+}
+
+.v-button-big .v-button-wrap,
+.v-disabled.v-button-big .v-button-wrap {
+    background: url(staticbuttonicon.png) right 0px;
+    height: 50px;
+    width: 150px;
+    padding: 1px 14px 0 8px;
+}
+
+.v-button-big .v-button-caption {
+    font-weight: normal;
+}
+.v-horizontal > .v-spacing
+ {
+    width: 150px;
+    height: 50px;
+}
+.v-caption
+{
+display: inline-block;
+}
+.v-nativebutton-borderless {
+   
+    background: transparent url(staticbuttonicon.png) no-repeat;
+    width: 150px;
+    height: 50px;
+}
   // Insert your own theme rules here
 }
