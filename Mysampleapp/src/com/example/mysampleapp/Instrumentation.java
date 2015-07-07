@@ -88,15 +88,15 @@ public class Instrumentation extends VerticalLayout implements View
 		InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 		prop.load(inputStream);
 		Instrumentationpath = prop.getProperty("InstrumentationPath");
-		File analysedfile=new File("C:\\Users\\subash\\Documents\\HiwiApp\\StaticAnalysis\\18-05-2015 21-14-586665426477859404576.txt");
+		//File analysedfile=new File("C:\\Users\\subash\\Documents\\HiwiApp\\StaticAnalysis\\18-05-2015 21-14-586665426477859404576.txt");
 		
-		FileOutputStream io=new FileOutputStream(analysedfile);
-		System.out.println(io.toString());
+		//FileOutputStream io=new FileOutputStream(analysedfile);
+		//System.out.println(io.toString());
 		//textstaticanalysis.setValue(io.toString());
 	 FileReader reader;
 	 
-		reader = new FileReader("C:\\Users\\subash\\Documents\\HiwiApp\\StaticAnalysis\\18-05-2015 21-14-586665426477859404576.txt");
-		System.out.println(reader.toString());
+		//reader = new FileReader("C:\\Users\\subash\\Documents\\HiwiApp\\StaticAnalysis\\18-05-2015 21-14-586665426477859404576.txt");
+		//System.out.println(reader.toString());
 		textstaticanalysis.setValue("The file is analysed");
 	} catch ( IOException e) {
 		// TODO Auto-generated catch block
