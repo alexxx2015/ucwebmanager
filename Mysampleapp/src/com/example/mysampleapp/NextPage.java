@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -36,6 +38,14 @@ import java.sql.Statement;
 
 
 
+
+
+
+
+
+
+
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -57,6 +67,7 @@ import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
+import com.vaadin.ui.Table;
 import com.vaadin.ui.Upload;
 import com.vaadin.ui.Upload.Receiver;
 import com.vaadin.ui.Upload.SucceededListener;
@@ -105,10 +116,13 @@ Connection conn=null;
 			prop.setProperty("dbpassword", "password");
 
 			// save properties to project root folder
-			//prop.store(output, null);
-			DatabaseConnection db=new DatabaseConnection();
-		 conn=db.Createconnection("jdbc:sqlite:C:/Users/subash/Documents/HiwiApp/Analysisdb.sqlite");
-		 Statement statement = conn.createStatement();
+			
+		DatabaseConnection db=new DatabaseConnection();
+		//System.out.println("before test step");
+		// conn=db.Createconnection("jdbc:sqlite:"+prop.getProperty("databasepath"));
+		 conn=db.Createconnection("jdbc:sqlite:"+System.getProperty("user.dir")+prop.getProperty("databasename")); 
+		
+		Statement statement = conn.createStatement();
 		 statement.setQueryTimeout(30);  // set timeout to 30 sec.	
 		 
 		 //statement.executeUpdate("insert into Staticanalysis values('program5',DateTime('now'), 'Not Yet Started')");		
@@ -217,7 +231,7 @@ Connection conn=null;
 		//FileUploader receiver = new ImageUploader(); 
 		Upload uploadFile = new Upload("Upload",this);
 		uploadFile.addSucceededListener(this);	
-		
+		Table tble=new Table();
 		//upload.addSucceededListener(receiver);
 		gridmain.getColumn("Name").setEditable(false);
 		

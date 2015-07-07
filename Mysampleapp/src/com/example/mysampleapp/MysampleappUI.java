@@ -2,9 +2,11 @@ package com.example.mysampleapp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -31,6 +33,14 @@ import com.vaadin.ui.UI;
 public class MysampleappUI extends UI
 {
 	public Navigator navigator= new Navigator(this,this);
+	
+	Properties prop = new Properties();
+	String propFileName = "Config.properties";//
+	 
+	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+	
+	
+	
 
 	@WebServlet(value = "/*", asyncSupported = true)
 	@VaadinServletConfiguration(productionMode = false, ui = MysampleappUI.class)
@@ -55,7 +65,7 @@ public class MysampleappUI extends UI
 	}
 	protected void createDirectory(String Name)
     {
-    	File directory = new File("C:\\Users\\subash\\Documents\\HiwiApp\\"+Name+"\\StaticAnalysis");
+    	File directory = new File(prop.getProperty("BaseFolderPath")+Name+prop.getProperty("StaticAnalysisFoldername"));
     	//File directory = new File("C:\\Users\\subash\\Documents\\HiwiApp\\App1");
     	try {
     		if (!directory.exists()) {
@@ -63,7 +73,7 @@ public class MysampleappUI extends UI
         			System.out.println("Directory is created!");
         			
         		} else {
-        			System.out.println("Failed to create directory! which is ::"+"C:\\Users\\subash\\Documents\\HiwiApp\\"+Name+"\\StaticAnalysis");
+        			System.out.println("Failed to create directory! which is ::"+prop.getProperty("BaseFolderPath")+Name+prop.getProperty("StaticAnalysisFoldername"));
         		}
         	}
 

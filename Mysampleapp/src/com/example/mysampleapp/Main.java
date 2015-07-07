@@ -19,12 +19,37 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 import com.vaadin.annotations.Theme;
 import com.vaadin.client.ui.VContextMenu;
 import com.vaadin.client.ui.menubar.MenuItem;
+import com.vaadin.data.Item;
+import com.vaadin.data.Property;
+import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.util.IndexedContainer;
+import com.vaadin.event.Action;
+import com.vaadin.event.ItemClickEvent;
+import com.vaadin.event.ItemClickEvent.ItemClickListener;
+import com.vaadin.event.ShortcutAction.KeyCode;
+import com.vaadin.event.ShortcutAction.ModifierKey;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.shared.MouseEventDetails;
+import com.vaadin.ui.AbstractField;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Table;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
@@ -49,38 +74,40 @@ public class Main extends VerticalLayout implements View
 {
 	MysampleappUI mainObj;
 	static String filename,Staticanalysispath;
-
-	/*@WebServlet(value = "/*", asyncSupported = true)
-	@VaadinServletConfiguration(productionMode = false, ui = NextPage.class)
-	public static class Servlet extends VaadinServlet
-	{
-	}*/
+	static int buttonnum=0;
+	String buttonname="b";
+	Properties prop = new Properties();
+	String propFileName = "Config.properties";//	 
+	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+	
+	
+	
+	
+	OutputStream output = null;
+		
+		 
+	
 	
 	@SuppressWarnings("deprecation")
 	public   Main(MysampleappUI o)
 	{		//final VerticalLayout layout = new VerticalLayout();
 //		this.getSession().getConfiguration().getInitParameters();
 		//Panel panel = new Panel("Static analysis");
-		Properties prop = new Properties();
+		
 	this.mainObj= o;
-		 OutputStream output = null;
+		 
 	 
 		
 	 
 			try {
-				output = new FileOutputStream("config.properties");
- 
-				// set the properties value
 				
-				
-				String propFileName = "Config.properties";
-				 
-				InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 				prop.load(inputStream);
+				output = new FileOutputStream("config.properties");				
 				Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
 				prop.setProperty("database", "localhost");
 				prop.setProperty("dbuser", "mkyong");
 				prop.setProperty("dbpassword", "password");
+				
  
 				// save properties to project root folder
 				prop.store(output, null);
@@ -91,11 +118,14 @@ public class Main extends VerticalLayout implements View
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	 
+			
         Label lblwelcome =new Label("Static Analysis");
         lblwelcome.setStyleName("labelwelcome");
         ComboBox cmbselectpr=new ComboBox();
-        cmbselectpr.setCaption("Select Program");
+        cmbselectpr.setCaption("Select Program");      
+
+        
+        
 		CheckBox chkmultithreaded=new CheckBox();
 		CheckBox chkcomputechops=new CheckBox();
 		CheckBox chksensitiveness=new CheckBox();
@@ -104,6 +134,7 @@ public class Main extends VerticalLayout implements View
 		Label lblcomputechops=new Label("Compute Chops");		
 		Label lblsensitiveness=new Label("Object Sensitiveness");
 		Label lblindirectflows=new Label("Indirect Flows");
+		
 		//Label lblname=new Label("Analysis Name");		
 		//Label lblmode=new Label("Mode");		
 		//Label lblpath=new Label("ClassPath");
@@ -115,14 +146,36 @@ public class Main extends VerticalLayout implements View
 		TextField txtSDGFile=new TextField("SDGFile");
 		TextField txtCGFile=new TextField("CGFile");
 		TextField txtReportFile=new TextField("Report File");
+		TextField txtpointtofallback=new TextField("Points To Fallback");
+		
 		Upload uploadSDGFile = new Upload();
+		
 		//uploadSDGFile.setButtonCaption("Browse");
 		Upload uploadCGFile = new Upload();
 		//uploadCGFile.setButtonCaption("Browse");
-		Upload uploadReportFile = new Upload();
-		//uploadReportFile.setButtonCaption("Browse");
+		
+		
 		TextField txtfldname=new TextField("Analysis Name");
-		TextField txtfldmode=new TextField("Mode");
+		
+		IndexedContainer cmbocontainer = new IndexedContainer();
+		cmbocontainer.addContainerProperty("name", String.class, null);
+		
+        ComboBox cmbmode=new ComboBox("Mode");
+        cmbmode.addItem("load");
+        cmbmode.addItem("build");
+        
+        ComboBox cmbpointstopolicy=new ComboBox("Points To Policy");
+        cmbpointstopolicy.addItem("RTA");
+        cmbpointstopolicy.addItem("TYPE_BASED");
+        cmbpointstopolicy.addItem("INSTANCE_BASED");
+        cmbpointstopolicy.addItem("OBJECT_SENSITIVE");
+        cmbpointstopolicy.addItem("N1_OBJECT_SENSITIVE");
+        cmbpointstopolicy.addItem("UNLIMITED_OBJECT_SENSITIVE");
+        cmbpointstopolicy.addItem("N1_CALL_STACK");
+        cmbpointstopolicy.addItem("N2_CALL_STACK");
+        cmbpointstopolicy.addItem("N3_CALL_STACK");
+        
+		
 		TextField txtfldpath=new TextField("Class Path");
 		TextField txtfldthirdpartylib=new TextField("Third Party Library");
 		
@@ -132,6 +185,7 @@ public class Main extends VerticalLayout implements View
 		Button btnsave = new Button("Save saveconfiguration");
 		Button btnrun = new Button("Run Analysis");
 		Button btnselectsnsFile = new Button("Select sns File");
+		
 		MenuBar barmenu = new MenuBar();
 		
 		@SuppressWarnings("deprecation")
@@ -178,27 +232,55 @@ public class Main extends VerticalLayout implements View
 		//vlayoutmenu.addComponent();
 		//hlayoutmenu.addComponent(btnnext);
 		HorizontalLayout hlayoutcoreinside=new  HorizontalLayout();
-		Grid gridclasspath=new Grid();
-		gridclasspath.addColumn("Classpath", String.class);
-		gridclasspath.setEditorEnabled(true);
-		gridclasspath.getColumn("Classpath").setEditable(true);
-		//VContextMenu vb=new VContextMenu(); 
-		//VerticalLayout vlaytables=new VerticalLayout();
+		Table gridclasspath=new Table();
+		gridclasspath.addContainerProperty("Classpath", TextField.class,null);		
+		gridclasspath.setPageLength(5);
+		gridclasspath.setColumnWidth("Classpath",400);
+		Table tblthirdpartylib=new Table();
+		tblthirdpartylib.addContainerProperty("ThirdPartyLibrary", TextField.class,null);		
+		tblthirdpartylib.setPageLength(5);
+		tblthirdpartylib.setColumnWidth("ThirdPartyLibrary",400);
+		Table tblpointstoinclude=new Table();
+		tblpointstoinclude.addContainerProperty("Points To Include", TextField.class,null);		
+		tblpointstoinclude.setPageLength(5);
+		tblpointstoinclude.setColumnWidth("Points To Include",400);
+		Table tblpointstoexclude=new Table();
+		tblpointstoexclude.addContainerProperty("Points To Exclude", TextField.class,null);		
+		tblpointstoexclude.setPageLength(5);
+		tblpointstoexclude.setColumnWidth("Points To Exclude",400);
+		//table for sinks and sources
+		Table tblsourcensinks=new Table();
+		tblsourcensinks.addContainerProperty("Types", ComboBox.class,null);
+		tblsourcensinks.addContainerProperty("Classes", TextField.class,null);
+		tblsourcensinks.addContainerProperty("Selector", TextField.class,null);
+		tblsourcensinks.addContainerProperty("Param", TextField.class,null);
+		tblsourcensinks.addContainerProperty("Include SubClasses", CheckBox.class,null);
+		tblsourcensinks.addContainerProperty("Indirect Calls", CheckBox.class,null);
+		tblsourcensinks.setPageLength(5);
+		tblsourcensinks.setColumnWidth("Classes",200);
+		tblsourcensinks.setColumnWidth("Selector",200);
+		//source and sinks table code ends
+		
+		
 		FormLayout fl=new FormLayout();
 		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
 		fl.addComponent(txtfldname);
-		fl.addComponent(txtfldmode);
+		fl.addComponent(cmbmode);
 		fl.addComponent(txtfldpath);
 		fl.addComponent(gridclasspath);
 		fl.addComponent(txtfldthirdpartylib);
-		
+		fl.addComponent(tblthirdpartylib);
 		fl.addComponent(txtSDGFile);		
 		fl.addComponent(uploadSDGFile);		
 		fl.addComponent(txtCGFile);
 		fl.addComponent(uploadCGFile);		
 		fl.addComponent(txtReportFile);
-		fl.addComponent(uploadReportFile);
+		fl.addComponent(cmbpointstopolicy);
+		fl.addComponent(txtpointtofallback);
+		fl.addComponent(tblpointstoinclude);
+		fl.addComponent(tblpointstoexclude);
 		fl.addComponent(btnselectsnsFile);
+		fl.addComponent(tblsourcensinks);
 		fl.setMargin(true);
 		//vlaytables.addComponent(fl);		
 		//VerticalLayout vlaychecboxes=new VerticalLayout();
@@ -258,7 +340,7 @@ public class Main extends VerticalLayout implements View
 		fl.addComponent(uploadCGFile);
 		
 		fl.addComponent(txtReportFile);
-		fl.addComponent(uploadReportFile);
+		
 		fl.addComponent(btnselectsnsFile);
 		*/
 		childgrid.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
@@ -287,6 +369,415 @@ public class Main extends VerticalLayout implements View
 				{ createDirectory(filename);
 								       	}
 			});
+			
+			//conext menu for gridclasspath
+			
+			gridclasspath.addItemClickListener(
+					new ItemClickListener() {
+			    public void itemClick(ItemClickEvent event) {
+			        if (event.getButton()== MouseEventDetails.MouseButton.RIGHT) {
+			        	gridclasspath.select(event.getItemId());
+			        }
+			    }
+
+				
+			}
+					);
+			gridclasspath.addActionHandler(
+					new Action.Handler() 
+			 {
+				   public Action[] getActions(Object target, Object sender)
+				   {
+					    final Action ACTION_NEW = new Action("New");
+					    final Action ACTION_EDIT = new Action("Edit");
+					    final Action ACTION_DELETE = new Action("Delete");
+					    final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_EDIT, ACTION_DELETE };
+					    return ACTIONS;
+
+				   }
+
+				@Override
+				public void handleAction(Action action, Object sender,
+						Object target) {
+					
+					Item rowItem = gridclasspath.getItem(target);
+					
+					if(action.getCaption()=="New")
+					{
+						TextField txt=new TextField("textfield");
+					    
+						//txt.setValue("Hey you");
+						Object newItemId = gridclasspath.addItem();
+						Item row = gridclasspath.getItem(newItemId);
+						row.getItemProperty("Classpath").setValue(txt);					
+						
+						gridclasspath.addItem(new Object[]{txt},newItemId);						
+						Button buttonnam = new Button(buttonname);
+						addComponent(buttonnam);
+						
+						buttonnam.setClickShortcut(KeyCode.ENTER);		
+						buttonnam.addClickListener(new Button.ClickListener() {
+						    @Override
+						    public void buttonClick(ClickEvent event)
+						    {  	gridclasspath.addItemAfter(new Object[]{txt},newItemId);	
+						    Item row = gridclasspath.getItem(newItemId);
+							row.getItemProperty("Classpath").setValue(txt);
+							System.out.println("the value of textfield is "+txt.getValue());
+						    
+						    	txt.setEnabled(false);
+						    	buttonnam.removeClickShortcut();
+						    	removeComponent(buttonnam);
+						    	
+						    	
+						    }
+						});
+												
+						
+					}
+					else if(action.getCaption()=="Delete")
+					{
+						/*gridclasspath.removeItem(gridclasspath.getValue());						 
+						gridclasspath.removeItem(rowItem);*/
+						gridclasspath.removeItem(target);
+						
+					}
+					
+				
+					
+				}
+			 });
+
+			
+			//context menu ends
+			
+			//context menu for thirdpartylibrary
+			tblthirdpartylib.addItemClickListener(
+					new ItemClickListener() {
+			    public void itemClick(ItemClickEvent event) {
+			        if (event.getButton()== MouseEventDetails.MouseButton.RIGHT) {
+			        	tblthirdpartylib.select(event.getItemId());
+			        }
+			    }
+
+				
+			}
+					);
+			tblthirdpartylib.addActionHandler(
+					new Action.Handler() 
+			 {
+				   public Action[] getActions(Object target, Object sender)
+				   {
+					    final Action ACTION_NEW = new Action("New");
+					   
+					    final Action ACTION_DELETE = new Action("Delete");
+					    final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_DELETE };
+					    return ACTIONS;
+
+				   }
+
+				@Override
+				public void handleAction(Action action, Object sender,
+						Object target) {
+					
+					Item rowItem = tblthirdpartylib.getItem(target);
+					
+					if(action.getCaption()=="New")
+					{
+						TextField txt=new TextField("textfield");
+					    
+						//txt.setValue("Hey you");
+						Object newItemId = tblthirdpartylib.addItem();
+						Item row = tblthirdpartylib.getItem(newItemId);
+						row.getItemProperty("ThirdPartyLibrary").setValue(txt);					
+						
+						tblthirdpartylib.addItem(new Object[]{txt},newItemId);						
+						Button buttonnam = new Button(buttonname);
+						addComponent(buttonnam);
+						
+						buttonnam.setClickShortcut(KeyCode.ENTER);		
+						buttonnam.addClickListener(new Button.ClickListener() {
+						    @Override
+						    public void buttonClick(ClickEvent event)
+						    {  	tblthirdpartylib.addItemAfter(new Object[]{txt},newItemId);	
+						    Item row = tblthirdpartylib.getItem(newItemId);
+							row.getItemProperty("ThirdPartyLibrary").setValue(txt);
+							System.out.println("the value of textfield is "+txt.getValue());
+						    
+						    	txt.setEnabled(false);
+						    	buttonnam.removeClickShortcut();
+						    	removeComponent(buttonnam);
+						    	
+						    	
+						    }
+						});
+												
+						
+					}
+					else if(action.getCaption()=="Delete")
+					{
+						/*gridclasspath.removeItem(gridclasspath.getValue());						 
+						gridclasspath.removeItem(rowItem);*/
+						tblthirdpartylib.removeItem(target);
+						
+					}
+					
+				
+					
+				}
+			 });
+
+			
+			//context menu ends
+			
+			//context menu handler for table points to include
+			tblpointstoinclude.addItemClickListener(
+					new ItemClickListener() {
+			    public void itemClick(ItemClickEvent event) {
+			        if (event.getButton()== MouseEventDetails.MouseButton.RIGHT) {
+			        	tblpointstoinclude.select(event.getItemId());
+			        }
+			    }
+
+				
+			}
+					);
+			tblpointstoinclude.addActionHandler(
+					new Action.Handler() 
+			 {
+				   public Action[] getActions(Object target, Object sender)
+				   {
+					    final Action ACTION_NEW = new Action("New");
+					   
+					    final Action ACTION_DELETE = new Action("Delete");
+					    final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_DELETE };
+					    return ACTIONS;
+
+				   }
+
+				@Override
+				public void handleAction(Action action, Object sender,
+						Object target) {
+					
+					Item rowItem = tblpointstoinclude.getItem(target);
+					
+					if(action.getCaption()=="New")
+					{
+						TextField txt=new TextField("textfield");
+					    
+						//txt.setValue("Hey you");
+						Object newItemId = tblpointstoinclude.addItem();
+						Item row = tblpointstoinclude.getItem(newItemId);
+						row.getItemProperty("Points To Include").setValue(txt);					
+						
+						tblpointstoinclude.addItem(new Object[]{txt},newItemId);						
+						Button buttonnam = new Button(buttonname);
+						addComponent(buttonnam);
+						
+						buttonnam.setClickShortcut(KeyCode.ENTER);		
+						buttonnam.addClickListener(new Button.ClickListener() {
+						    @Override
+						    public void buttonClick(ClickEvent event)
+						    {  	tblpointstoinclude.addItemAfter(new Object[]{txt},newItemId);	
+						    Item row = tblpointstoinclude.getItem(newItemId);
+							row.getItemProperty("Points To Include").setValue(txt);
+							System.out.println("the value of textfield is "+txt.getValue());
+						    
+						    	txt.setEnabled(false);
+						    	buttonnam.removeClickShortcut();
+						    	removeComponent(buttonnam);
+						    	
+						    	
+						    }
+						});
+												
+					}
+					else if(action.getCaption()=="Delete")
+					{
+						/*gridclasspath.removeItem(gridclasspath.getValue());						 
+						gridclasspath.removeItem(rowItem);*/
+						tblpointstoinclude.removeItem(target);
+						
+					}
+					
+				
+					
+				}
+			 });
+//ends
+			//context menu for table points to exclude
+			tblpointstoexclude.addItemClickListener(
+					new ItemClickListener() {
+			    public void itemClick(ItemClickEvent event) {
+			        if (event.getButton()== MouseEventDetails.MouseButton.RIGHT) {
+			        	tblpointstoexclude.select(event.getItemId());
+			        }
+			    }
+
+				
+			}
+					);
+			tblpointstoexclude.addActionHandler(
+					new Action.Handler() 
+			 {
+				   public Action[] getActions(Object target, Object sender)
+				   {
+					    final Action ACTION_NEW = new Action("New");
+					   
+					    final Action ACTION_DELETE = new Action("Delete");
+					    final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_DELETE };
+					    return ACTIONS;
+
+				   }
+
+				@Override
+				public void handleAction(Action action, Object sender,
+						Object target) {
+					
+					Item rowItem = tblpointstoexclude.getItem(target);
+					
+					if(action.getCaption()=="New")
+					{
+						TextField txt=new TextField("textfield");
+					    
+						//txt.setValue("Hey you");
+						Object newItemId = tblpointstoexclude.addItem();
+						Item row = tblpointstoexclude.getItem(newItemId);
+						row.getItemProperty("Points To Exclude").setValue(txt);					
+						
+						tblpointstoexclude.addItem(new Object[]{txt},newItemId);						
+						Button buttonnam = new Button(buttonname);
+						addComponent(buttonnam);
+						
+						buttonnam.setClickShortcut(KeyCode.ENTER);		
+						buttonnam.addClickListener(new Button.ClickListener() {
+						    @Override
+						    public void buttonClick(ClickEvent event)
+						    {  	tblpointstoexclude.addItemAfter(new Object[]{txt},newItemId);	
+						    Item row = tblpointstoexclude.getItem(newItemId);
+							row.getItemProperty("Points To Exclude").setValue(txt);
+							System.out.println("the value of textfield is "+txt.getValue());
+						    
+						    	txt.setEnabled(false);
+						    	buttonnam.removeClickShortcut();
+						    	removeComponent(buttonnam);
+						    	
+						    	
+						    }
+						});
+												
+						
+					}
+					else if(action.getCaption()=="Delete")
+					{
+						/*gridclasspath.removeItem(gridclasspath.getValue());						 
+						gridclasspath.removeItem(rowItem);*/
+						tblpointstoexclude.removeItem(target);
+						
+					}
+					
+				
+					
+				}
+			 });
+			//ends
+           //context menu for table sourcensinks
+			tblsourcensinks.addItemClickListener(
+					new ItemClickListener() {
+			    public void itemClick(ItemClickEvent event) {
+			        if (event.getButton()== MouseEventDetails.MouseButton.RIGHT) {
+			        	tblsourcensinks.select(event.getItemId());
+			        }
+			    }
+
+				
+			}
+					);
+			tblsourcensinks.addActionHandler(
+					new Action.Handler() 
+			 {
+				   public Action[] getActions(Object target, Object sender)
+				   {
+					    final Action ACTION_NEW = new Action("New");
+					   
+					    final Action ACTION_DELETE = new Action("Delete");
+					    final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_DELETE };
+					    return ACTIONS;
+
+				   }
+
+				@Override
+				public void handleAction(Action action, Object sender,
+						Object target) {
+					
+					Item rowItem = tblsourcensinks.getItem(target);
+					
+					if(action.getCaption()=="New")
+					{
+						TextField txt=new TextField("textfield");
+					    
+						
+						Object newItemId = tblsourcensinks.addItem();
+						Item row = tblsourcensinks.getItem(newItemId);
+						row.getItemProperty("Points To Exclude").setValue(txt);					
+						
+						tblsourcensinks.addItem(new Object[]{txt},newItemId);						
+						Button buttonnam = new Button(buttonname);
+						addComponent(buttonnam);
+						
+						buttonnam.setClickShortcut(KeyCode.ENTER);		
+						buttonnam.addClickListener(new Button.ClickListener() {
+						    @Override
+						    public void buttonClick(ClickEvent event)
+						    {  	tblsourcensinks.addItemAfter(new Object[]{txt},newItemId);	
+						    Item row = tblsourcensinks.getItem(newItemId);
+							row.getItemProperty("Points To Exclude").setValue(txt);
+							System.out.println("the value of textfield is "+txt.getValue());
+						    
+						    	txt.setEnabled(false);
+						    	buttonnam.removeClickShortcut();
+						    	removeComponent(buttonnam);
+						    	
+						    	
+						    }
+						});
+												
+						
+					}
+					else if(action.getCaption()=="Delete")
+					{
+						
+						tblpointstoexclude.removeItem(target);
+						
+					}
+					
+				
+					
+				}
+			 });
+
+		   //ends
+			 cmbmode.addValueChangeListener(new Property.ValueChangeListener() 
+			 {
+		            private static final long serialVersionUID = -5188369735622627751L;
+
+		            public void valueChange(ValueChangeEvent event) {
+		                if (cmbmode.getValue() != null&&(cmbmode.getValue()=="build")) 
+		                {
+		                	uploadSDGFile.setVisible(false);
+		                	uploadCGFile.setVisible(false);
+		                
+		                 
+		                }
+		                else 
+		                	{
+		                	uploadSDGFile.setVisible(true);
+		                	uploadCGFile.setVisible(true);
+		                	
+		                	}
+		            }
+
+					
+		        });
 			/*MenuBar.Command mycommand = new MenuBar.Command()
 			{
 			    @SuppressWarnings("deprecation")
@@ -324,15 +815,17 @@ public class Main extends VerticalLayout implements View
 	}
 	protected void createDirectory(String Name)
     {
+		
 		File directory = new File(Staticanalysispath);
     	//File directory = new File("C:\\Users\\subash\\Documents\\HiwiApp\\App1");
     	try {
+    		prop.load(inputStream);
     		if (!directory.exists()) {
         		if (directory.mkdirs()) {
         			System.out.println("Directory is created!");
         			
         		} else {
-        			System.out.println("Failed to create directory! which is ::"+"C:\\Users\\subash\\Documents\\HiwiApp\\"+Name+"\\StaticAnalysis");
+        			System.out.println("Failed to create directory! which is ::"+prop.getProperty("BaseFolderPath")+Name+prop.getProperty("StaticAnalysisFoldername"));
         		}
         	}
 
