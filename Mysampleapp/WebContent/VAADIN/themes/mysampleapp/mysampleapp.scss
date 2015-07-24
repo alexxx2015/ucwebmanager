@@ -52,6 +52,11 @@
   font-weight: bold;
 }
 
+.vLayoutScroll > div
+{
+overflow: auto !important;
+}
+
 
 /* BIG white style */
 .v-button-big:focus {
