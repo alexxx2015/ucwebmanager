@@ -1,0 +1,10 @@
+@import "tests-valo-dark.scss";
+//@import "../tests-valo/valotest";
+@import "addons.scss";
+
+.tests-valo-dark {
+   //@include valotest;
+   @include tests-valo-dark;
+   @include addons;   
+   
+}

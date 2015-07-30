@@ -29,7 +29,7 @@ import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.UI;
 
 @SuppressWarnings("serial")
-//@Theme("mysampleapp")
+@Theme("tests-valo-dark")
 public class MysampleappUI extends UI
 {
 	public Navigator navigator= new Navigator(this,this);

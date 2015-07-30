@@ -28,7 +28,7 @@ import com.vaadin.ui.TextArea;
 import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
-@Theme("mysampleap1p")
+//@Theme("mysampleap1p")
 public class Instrumentation extends VerticalLayout implements View
 {    
 	

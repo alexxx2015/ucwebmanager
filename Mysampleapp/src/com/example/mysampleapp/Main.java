@@ -48,7 +48,7 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
 @SuppressWarnings("serial")
-//@Theme("dasdsads")
+@Theme("tests-valo-dark")
 public class Main extends VerticalLayout implements View {
 	MysampleappUI mainObj;
 	static String filename, Staticanalysispath;
