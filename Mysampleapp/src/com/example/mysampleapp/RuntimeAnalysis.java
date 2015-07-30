@@ -24,7 +24,7 @@ import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.VerticalLayout;
 
 @SuppressWarnings("serial")
-@Theme("mysampleapp")
+@Theme("mysampleaeeepp")
 public class RuntimeAnalysis extends VerticalLayout implements View
 {
 	  MysampleappUI mainObj;

@@ -48,7 +48,7 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
 @SuppressWarnings("serial")
-@Theme("mysampleapp")
+//@Theme("dasdsads")
 public class Main extends VerticalLayout implements View {
 	MysampleappUI mainObj;
 	static String filename, Staticanalysispath;
@@ -210,10 +210,10 @@ public class Main extends VerticalLayout implements View {
 		tblpointstoexclude.setPageLength(5);
 		tblpointstoexclude.setColumnWidth("Points To Exclude", 400);
 		// table for sinks and sources
-		Button btnsubwindow=new Button("open subwindow");
+		//Button btnsubwindow=new Button("open subwindow");
 		
 		Table tblsourcensinks = new Table();
-		tblsourcensinks.addContainerProperty("Types", ComboBox.class, null);
+		tblsourcensinks.addContainerProperty("Types", TextField.class, null);
 		tblsourcensinks.addContainerProperty("Classes", TextField.class, null);
 		tblsourcensinks.addContainerProperty("Selector", TextField.class, null);
 		tblsourcensinks.addContainerProperty("Param", TextField.class, null);
@@ -247,7 +247,7 @@ public class Main extends VerticalLayout implements View {
 		fl.addComponent(txtpointtofallback);
 		fl.addComponent(tblpointstoinclude);
 		fl.addComponent(tblpointstoexclude);
-		fl.addComponent(btnsubwindow);
+		//fl.addComponent(btnsubwindow);
 		fl.addComponent(btnselectsnsFile);
 		fl.addComponent(tblsourcensinks);
 		fl.setMargin(true);
@@ -365,7 +365,7 @@ public class Main extends VerticalLayout implements View {
         // Center it in the browser window
         subWindow.center();
         
-		btnsubwindow.addClickListener(new Button.ClickListener() {
+		/*btnsubwindow.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				
 		        
@@ -382,7 +382,7 @@ public class Main extends VerticalLayout implements View {
 						{
 						
 						TextField tempClass=new TextField();
-						ComboBox tempTypes=new ComboBox();
+						TextField txtTypes=new TextField();
 						TextField tempSelector=new TextField();
 						TextField tempParam=new TextField();
 						CheckBox tempIncludeSubClass=new CheckBox();
@@ -396,29 +396,49 @@ public class Main extends VerticalLayout implements View {
 						tempParam.setValue(text);
 						text=cmbtypes.getValue().toString();
 						
-						//tempTypes.select(cmbtypes.getitem);
+						Object itemid=cmbtypes.getConvertedValue();
+						txtTypes.setValue(cmbtypes.getValue().toString());
+						
 						boolean tempbool=chkinclude.getValue();
 						tempIncludeSubClass.setValue(tempbool);
 						tempbool=chkindirectcalls.getValue();
 						tempIndirectCalls.setValue(tempbool);
 					
 						Object newItemId = tblsourcensinks.addItem();
+					
 						
-					    tblsourcensinks.addItem(new Object[] { tempClass }, newItemId);
-					    tblsourcensinks.addItem(new Object[] { tempSelector }, newItemId);
-					    tblsourcensinks.addItem(new Object[] { tempParam }, newItemId);
-					    tblsourcensinks.addItem(new Object[] { tempIncludeSubClass }, newItemId);
-					    tblsourcensinks.addItem(new Object[] { tempIndirectCalls }, newItemId);
-					    tblsourcensinks.addItem(new Object[] { tempTypes }, newItemId);
+					    //tblsourcensinks.addItem(new Object[] { tempClass }, newItemId);
+						
+					   // tblsourcensinks.addItem(new Object[] { tempSelector }, newItemId);
+					    //tblsourcensinks.addItem(new Object[] { tempParam }, newItemId);
+					   // tblsourcensinks.addItem(new Object[] { tempIncludeSubClass }, newItemId);
+					    //tblsourcensinks.addItem(new Object[] { tempIndirectCalls }, newItemId);
+					    //tblsourcensinks.addItem(new Object[] { tempTypes }, newItemId);
 					    
 						Item row = tblsourcensinks.getItem(newItemId);
 						
 						row.getItemProperty("Classes").setValue(tempClass);
+						
 						row.getItemProperty("Selector").setValue(tempSelector);
 						row.getItemProperty("Param").setValue(tempParam);
 						row.getItemProperty("Include SubClasses").setValue(tempIncludeSubClass);
 						row.getItemProperty("Indirect Calls").setValue(tempIndirectCalls);
-						row.getItemProperty("Types").setValue(tempTypes);
+						row.getItemProperty("Types").setValue(txtTypes);
+						
+						
+						tempClass.setVisible(true);
+						tempClass.setEnabled(false);
+						tempSelector.setVisible(true);
+						tempSelector.setEnabled(false);
+						tempParam.setVisible(true);
+						tempParam.setEnabled(false);
+						tempIncludeSubClass.setVisible(true);
+						tempIncludeSubClass.setEnabled(false);
+						tempIndirectCalls.setVisible(true);
+						tempIndirectCalls.setEnabled(false);
+						txtTypes.setVisible(true);
+						txtTypes.setEnabled(false);
+						
 						
 						subWindow.close();
 						}
@@ -432,7 +452,7 @@ public class Main extends VerticalLayout implements View {
 				});
 		        
 			}
-		});
+		});*/
 		
 		
 
@@ -725,65 +745,105 @@ public class Main extends VerticalLayout implements View {
 
 				Item rowItem = tblsourcensinks.getItem(target);
 
-				if (action.getCaption() == "New") {
-
-					ComboBox cmbtypes = new ComboBox("Types");
-					TextField txtClass = new TextField("Classes");
-					TextField txtselector = new TextField("Selector");
-					TextField txtparam = new TextField("Param");
-					CheckBox chksubclasses = new CheckBox("Include subClass");
-					CheckBox chkindirectcalls = new CheckBox("Indirect Calls");
-					cmbtypes.addItem("Source");
-					cmbtypes.addItem("Sink");
-
-					Object newItemId = tblsourcensinks.addItem();
-					Item row = tblsourcensinks.getItem(newItemId);
-					row.getItemProperty("Types").setValue(cmbtypes);
-					row.getItemProperty("Classes").setValue(txtClass);
-					row.getItemProperty("Selector").setValue(txtselector);
-					row.getItemProperty("Param").setValue(txtparam);
-					row.getItemProperty("Include SubClasses").setValue(chksubclasses);
-					row.getItemProperty("Indirect Calls").setValue(chkindirectcalls);
-
-					tblsourcensinks.addItem(new Object[] { cmbtypes }, newItemId);
-					tblsourcensinks.addItem(new Object[] { txtClass }, newItemId);
-					tblsourcensinks.addItem(new Object[] { txtselector }, newItemId);
-					tblsourcensinks.addItem(new Object[] { txtparam }, newItemId);
-					tblsourcensinks.addItem(new Object[] { chksubclasses }, newItemId);
-					tblsourcensinks.addItem(new Object[] { chkindirectcalls }, newItemId);
-
-					Button buttonnam = new Button(buttonname);
-					addComponent(buttonnam);
-
-					buttonnam.setClickShortcut(KeyCode.ENTER);
-					buttonnam.addClickListener(new Button.ClickListener() {
-						@Override
-						public void buttonClick(ClickEvent event) {
-							tblsourcensinks.addItem(new Object[] { cmbtypes }, newItemId);
-							tblsourcensinks.addItem(new Object[] { txtClass }, newItemId);
-							tblsourcensinks.addItem(new Object[] { txtselector }, newItemId);
-							tblsourcensinks.addItem(new Object[] { txtparam }, newItemId);
-							tblsourcensinks.addItem(new Object[] { chksubclasses }, newItemId);
-							tblsourcensinks.addItem(new Object[] { chkindirectcalls }, newItemId);
-
+				if (action.getCaption() == "New") 
+				{
+					
+					
+					 // Open it in the UI
+			        UI.getCurrent().addWindow(subWindow);
+			        
+			        
+			        btnsavetotable.addClickListener(new Button.ClickListener() {
+			        	int counter=0;
+			        	
+			        	
+			        	@SuppressWarnings("unchecked")
+						public void buttonClick(ClickEvent event) {	
+							//subWindow.close();
+			        		try
+							{
+			        		counter++;
+			        		if(counter==1)
+			        		{
+							TextField tempClass=new TextField();
+							TextField txtTypes=new TextField();
+							TextField tempSelector=new TextField();
+							TextField tempParam=new TextField();
+							CheckBox tempIncludeSubClass=new CheckBox();
+							CheckBox tempIndirectCalls=new CheckBox();
+							
+							String text = txtclasses.getValue();
+							tempClass.setValue(text);
+							text=txtselector.getValue();
+							tempSelector.setValue(text);
+							text=txtparam.getValue();
+							tempParam.setValue(text);
+							
+							if(cmbtypes.getValue()!=null)
+							{
+							
+							//Object itemid=cmbtypes.getConvertedValue();
+							txtTypes.setValue(cmbtypes.getValue().toString());
+							}
+							
+							boolean tempbool=chkinclude.getValue();
+							tempIncludeSubClass.setValue(tempbool);
+							tempbool=chkindirectcalls.getValue();
+							tempIndirectCalls.setValue(tempbool);
+						
+							Object newItemId = tblsourcensinks.addItem();
+						
+							
+						    //tblsourcensinks.addItem(new Object[] { tempClass }, newItemId);
+							
+						   // tblsourcensinks.addItem(new Object[] { tempSelector }, newItemId);
+						    //tblsourcensinks.addItem(new Object[] { tempParam }, newItemId);
+						   // tblsourcensinks.addItem(new Object[] { tempIncludeSubClass }, newItemId);
+						    //tblsourcensinks.addItem(new Object[] { tempIndirectCalls }, newItemId);
+						    //tblsourcensinks.addItem(new Object[] { tempTypes }, newItemId);
+						    
 							Item row = tblsourcensinks.getItem(newItemId);
-							row.getItemProperty("Types").setValue(cmbtypes);
-							row.getItemProperty("Classes").setValue(txtClass);
-							row.getItemProperty("Selector").setValue(txtselector);
-							row.getItemProperty("Param").setValue(txtparam);
+							
+							row.getItemProperty("Classes").setValue(tempClass);
+							
+							row.getItemProperty("Selector").setValue(tempSelector);
+							row.getItemProperty("Param").setValue(tempParam);
+							row.getItemProperty("Include SubClasses").setValue(tempIncludeSubClass);
+							row.getItemProperty("Indirect Calls").setValue(tempIndirectCalls);
+							row.getItemProperty("Types").setValue(txtTypes);
+							
+							
+							tempClass.setVisible(true);
+							tempClass.setEnabled(false);
+							tempSelector.setVisible(true);
+							tempSelector.setEnabled(false);
+							tempParam.setVisible(true);
+							tempParam.setEnabled(false);
+							tempIncludeSubClass.setVisible(true);
+							tempIncludeSubClass.setEnabled(false);
+							tempIndirectCalls.setVisible(true);
+							tempIndirectCalls.setEnabled(false);
+							txtTypes.setVisible(true);
+							txtTypes.setEnabled(false);
+							
+							
+							subWindow.close();
+			        		}
+							
+							}
+							catch(Exception ex){System.out.println(ex.getMessage());}
+							
+							
 
-							row.getItemProperty("Include SubClasses").setValue(chksubclasses);
-							row.getItemProperty("Indirect Calls").setValue(chkindirectcalls);
-
-							buttonnam.removeClickShortcut();
-							removeComponent(buttonnam);
-
+							
+					        
 						}
 					});
 
-				} else if (action.getCaption() == "Delete") {
+				}
+		else if (action.getCaption() == "Delete") {
 
-					tblpointstoexclude.removeItem(target);
+			tblsourcensinks.removeItem(target);
 
 				}
 
