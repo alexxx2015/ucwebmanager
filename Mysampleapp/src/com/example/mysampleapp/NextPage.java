@@ -118,16 +118,20 @@ Connection conn=null;
 			// save properties to project root folder
 			
 		DatabaseConnection db=new DatabaseConnection();
-		//System.out.println("before test step");
-		// conn=db.Createconnection("jdbc:sqlite:"+prop.getProperty("databasepath"));
-		 conn=db.Createconnection("jdbc:sqlite:"+System.getProperty("user.dir")+prop.getProperty("databasename")); 
-		
-		Statement statement = conn.createStatement();
+		String connectionstring="jdbc:sqlite:"+dbpath;
+		// conn=db.Createconnection("jdbc:sqlite:"+System.getProperty("databasepath")+prop.getProperty("databasename"));
+		 conn=db.Createconnection(connectionstring);
+		 ResultSet rs=null;
+		 if(conn!=null)
+		{
+		 Statement statement = conn.createStatement();
 		 statement.setQueryTimeout(30);  // set timeout to 30 sec.	
 		 
 		 //statement.executeUpdate("insert into Staticanalysis values('program5',DateTime('now'), 'Not Yet Started')");		
-		 ResultSet rs = statement.executeQuery("select * from Staticanalysis");	
-
+		  rs = statement.executeQuery("select * from Staticanalysis");	
+		}
+		else
+			System.out.println("could not create connection to database "+connectionstring);
  		// Have a container of some type to contain the data			
  		 
 		 
@@ -135,7 +139,7 @@ Connection conn=null;
 		 BeanItemContainer<FileInfo> filedata =	 new BeanItemContainer<>(FileInfo.class);
 		 DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
          DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-         Document doc = docBuilder.parse (new File("D:\\HIWI\\Samplefiledata.xml"));
+         Document doc = docBuilder.parse (new File("C:/Users/Student/Samplefiledata.xml"));
          doc.getDocumentElement ().normalize ();
          System.out.println ("Root element of the doc is " +   doc.getDocumentElement().getNodeName());
          NodeList listOffile = doc.getElementsByTagName("File");

@@ -9,13 +9,27 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
-import com.google.gwt.user.client.ui.HTML;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.vaadin.annotations.Theme;
-import com.vaadin.client.ui.VOverlay;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
@@ -38,9 +52,9 @@ import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
-import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.Panel;
 import com.vaadin.ui.Table;
+import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Upload;
@@ -57,8 +71,16 @@ public class Main extends VerticalLayout implements View {
 	Properties prop = new Properties();
 	String propFileName = "Config.properties";//
 	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+	//create global variables
+	String analysisname,modvalue,classpath,thirdpartylib,stubs;
+	boolean multhithreaded;
+	String sdgvalue,cgvalue;
+	boolean ignoreindirectflowvalue;
+	boolean computechopsvalue,objectsensitivevalue;
+	String snsfilevalue;
 
 	OutputStream output = null;
+	Table gridclasspath,tblthirdpartylib,tblpointstoinclude,tblpointstoexclude, tblsourcensinks ;
 
 	@SuppressWarnings("deprecation")
 	public Main(MysampleappUI o) { // final VerticalLayout layout = new
@@ -93,10 +115,10 @@ public class Main extends VerticalLayout implements View {
 		ComboBox cmbselectpr = new ComboBox();
 		cmbselectpr.setCaption("Select Program");
 
-		CheckBox chkmultithreaded = new CheckBox();
-		CheckBox chkcomputechops = new CheckBox();
-		CheckBox chksensitiveness = new CheckBox();
-		CheckBox chkindirectflows = new CheckBox();
+		CheckBox chkmultithreaded = new CheckBox("Multithreaded");
+		CheckBox chkcomputechops = new CheckBox("Compute Chops");
+		CheckBox chksensitiveness = new CheckBox("Object Sensitiveness");
+		CheckBox chkindirectflows = new CheckBox("Indirect Flows");
 		Label lblmultithreaded = new Label("Multithreaded");
 		Label lblcomputechops = new Label("Compute Chops");
 		Label lblsensitiveness = new Label("Object Sensitiveness");
@@ -114,7 +136,10 @@ public class Main extends VerticalLayout implements View {
 		TextField txtCGFile = new TextField("CGFile");
 		TextField txtReportFile = new TextField("Report File");
 		TextField txtpointtofallback = new TextField("Points To Fallback");
-
+		txtSDGFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtCGFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtReportFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtpointtofallback.setWidth(24.6f, ComboBox.UNITS_EM);
 		Upload uploadSDGFile = new Upload();
 
 		// uploadSDGFile.setButtonCaption("Browse");
@@ -122,15 +147,29 @@ public class Main extends VerticalLayout implements View {
 		// uploadCGFile.setButtonCaption("Browse");
 
 		TextField txtfldname = new TextField("Analysis Name");
-
+		txtfldname.setWidth(24.6f, ComboBox.UNITS_EM);
 		IndexedContainer cmbocontainer = new IndexedContainer();
 		cmbocontainer.addContainerProperty("name", String.class, null);
 
 		ComboBox cmbmode = new ComboBox("Mode");
+		cmbmode.setNullSelectionAllowed(false);
+		
 		cmbmode.addItem("load");
 		cmbmode.addItem("build");
+		cmbmode.setValue("build");
+		if (cmbmode.getValue() != null && (cmbmode.getValue() == "build")) {
+			uploadSDGFile.setVisible(false);
+			uploadCGFile.setVisible(false);
+
+		} else {
+			uploadSDGFile.setVisible(true);
+			uploadCGFile.setVisible(true);
+
+		}
 
 		ComboBox cmbpointstopolicy = new ComboBox("Points To Policy");
+		cmbpointstopolicy.setNullSelectionAllowed(false);
+		
 		cmbpointstopolicy.addItem("RTA");
 		cmbpointstopolicy.addItem("TYPE_BASED");
 		cmbpointstopolicy.addItem("INSTANCE_BASED");
@@ -140,6 +179,7 @@ public class Main extends VerticalLayout implements View {
 		cmbpointstopolicy.addItem("N1_CALL_STACK");
 		cmbpointstopolicy.addItem("N2_CALL_STACK");
 		cmbpointstopolicy.addItem("N3_CALL_STACK");
+		cmbpointstopolicy.setValue("RTA");
 
 		TextField txtfldpath = new TextField("Class Path");
 		TextField txtfldthirdpartylib = new TextField("Third Party Library");
@@ -147,10 +187,12 @@ public class Main extends VerticalLayout implements View {
 		Button btnnext = new Button("Next");
 		Button btnprev = new Button("Prev");
 		// Button btnload = new Button("Instrument");
-		Button btnsave = new Button("Save saveconfiguration");
+		Button btnsave = new Button("Save Configuration");
 		Button btnrun = new Button("Run Analysis");
 		Button btnselectsnsFile = new Button("Select sns File");
-
+		//Button btnSave = new Button("Save Configuration");
+		//Button btnRun = new Button("Run Analysis");
+		
 		MenuBar barmenu = new MenuBar();
 
 		@SuppressWarnings("deprecation")
@@ -193,26 +235,26 @@ public class Main extends VerticalLayout implements View {
 		// vlayoutmenu.addComponent();
 		// hlayoutmenu.addComponent(btnnext);
 		HorizontalLayout hlayoutcoreinside = new HorizontalLayout();
-		Table gridclasspath = new Table();
+		gridclasspath = new Table("ClassPath");
 		gridclasspath.addContainerProperty("Classpath", TextField.class, null);
 		gridclasspath.setPageLength(5);
 		gridclasspath.setColumnWidth("Classpath", 400);
-		Table tblthirdpartylib = new Table();
+		 tblthirdpartylib = new Table("Third Party Library");
 		tblthirdpartylib.addContainerProperty("ThirdPartyLibrary", TextField.class, null);
 		tblthirdpartylib.setPageLength(5);
 		tblthirdpartylib.setColumnWidth("ThirdPartyLibrary", 400);
-		Table tblpointstoinclude = new Table();
+		 tblpointstoinclude = new Table("Points To Include");
 		tblpointstoinclude.addContainerProperty("Points To Include", TextField.class, null);
 		tblpointstoinclude.setPageLength(5);
 		tblpointstoinclude.setColumnWidth("Points To Include", 400);
-		Table tblpointstoexclude = new Table();
+		 tblpointstoexclude = new Table("Points To Exclude");
 		tblpointstoexclude.addContainerProperty("Points To Exclude", TextField.class, null);
 		tblpointstoexclude.setPageLength(5);
 		tblpointstoexclude.setColumnWidth("Points To Exclude", 400);
 		// table for sinks and sources
 		//Button btnsubwindow=new Button("open subwindow");
 		
-		Table tblsourcensinks = new Table();
+		 tblsourcensinks = new Table("Source and Sinks");
 		tblsourcensinks.addContainerProperty("Types", TextField.class, null);
 		tblsourcensinks.addContainerProperty("Classes", TextField.class, null);
 		tblsourcensinks.addContainerProperty("Selector", TextField.class, null);
@@ -231,12 +273,30 @@ public class Main extends VerticalLayout implements View {
 		Panel pnltables = new Panel();
 
 		FormLayout fl = new FormLayout();
+		TextArea  txterror=new TextArea ("You cannot add the values to the table since another duplicate row is already present");
 		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
+		
+		
+		//HorizontalLayout chkhorilay=new HorizontalLayout();
+		//VerticalLayout lblvlay=new VerticalLayout();
+		//VerticalLayout chkvlay=new VerticalLayout();
+		//lblvlay.addComponent(lblmultithreaded);
+		//lblvlay.addComponent(lblsensitiveness);
+		//lblvlay.addComponent(lblindirectflows);
+		//lblvlay.addComponent(lblcomputechops);
+		
+		//chkvlay.addComponent(chksensitiveness);
+		//chkvlay.addComponent(chkindirectflows);
+		//chkvlay.addComponent(chkcomputechops);
+		//chkvlay.addComponent(chkmultithreaded);
+		//chkhorilay.addComponents(lblvlay,chkvlay);
+		//fl.addComponent(chkhorilay);
+		
 		fl.addComponent(txtfldname);
 		fl.addComponent(cmbmode);
-		fl.addComponent(txtfldpath);
+		//fl.addComponent(txtfldpath);
 		fl.addComponent(gridclasspath);
-		fl.addComponent(txtfldthirdpartylib);
+		//fl.addComponent(txtfldthirdpartylib);
 		fl.addComponent(tblthirdpartylib);
 		fl.addComponent(txtSDGFile);
 		fl.addComponent(uploadSDGFile);
@@ -245,67 +305,58 @@ public class Main extends VerticalLayout implements View {
 		fl.addComponent(txtReportFile);
 		fl.addComponent(cmbpointstopolicy);
 		fl.addComponent(txtpointtofallback);
+		
 		fl.addComponent(tblpointstoinclude);
-		fl.addComponent(tblpointstoexclude);
+		HorizontalLayout HorizontalLayout=new HorizontalLayout();
+		HorizontalLayout.addComponent(tblpointstoexclude);
+		HorizontalLayout.addComponent(txterror);
+		txterror.setVisible(false);
+		fl.addComponent(HorizontalLayout);
+		//fl.addComponent(tblpointstoexclude);
+		
 		//fl.addComponent(btnsubwindow);
-		fl.addComponent(btnselectsnsFile);
+		//fl.addComponent(btnselectsnsFile);
+		
 		fl.addComponent(tblsourcensinks);
+		//fl.addComponent(txterror);
+		fl.addComponent(chkmultithreaded);
+		fl.addComponent(chksensitiveness);
+		fl.addComponent(chkindirectflows);
+		fl.addComponent(chkcomputechops);
+		fl.addComponent(btnsave);
+		fl.addComponent(btnrun);
 		fl.setMargin(true);
+		//assign values to global variables
+		analysisname=txtfldname.getValue();
+		modvalue=(String)cmbmode.getValue();
+		ignoreindirectflowvalue=chkindirectflows.getValue();
+		multhithreaded=chkmultithreaded.getValue();
+		computechopsvalue=chkcomputechops.getValue();
+		objectsensitivevalue=chksensitiveness.getValue();
+		
+		//assigning values ends
 
 		pnltables.setContent(fl);
 		fl.setSizeUndefined();
 		pnltables.getContent().setSizeUndefined();
 		pnltables.setScrollLeft(6);
 
-		// vlaytables.addComponent(fl);
-		// VerticalLayout vlaychecboxes=new VerticalLayout();
-		// hlayoutcoreinside.addComponent(fl);
-		// hlayoutcoreinside.addComponent(vlaychecboxes);
+		
 		vlayoutmenu.setSizeFull();
 		vlayoutmenu.setMargin(true);
 
 		hlayoutcore.addComponent(vlayoutmenu);
 		hlayoutcore.addComponent(pnltables);
-		// hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
-		// hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
-		// hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		
 
 		//
 		this.setSpacing(true);
-		// this.setExpandRatio(barmenu, 2*1.0f);
-		// this.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
-		/*
-		 * HorizontalLayout hlayout=new HorizontalLayout();
-		 * hlayout.setWidth("500px");
-		 */
-
-		/*
-		 * hlayout.addComponent(chkmultithreaded,0);
-		 * hlayout.addComponent(lblmultithreaded,1);
-		 * hlayout.setExpandRatio(lblmultithreaded,3*1.0f);
-		 * hlayout.addComponent(chkcomputechops,2);
-		 * hlayout.addComponent(lblcomputechops,3);
-		 */
-		/*
-		 * hlayout.setExpandRatio(lblcomputechops,2*1.0f);
-		 * hlayout.addComponent(chksensitiveness,4);
-		 * hlayout.addComponent(lblsensitiveness,5);
-		 * hlayout.setExpandRatio(lblsensitiveness,2*1.0f);
-		 * hlayout.addComponent(chkindirectflows,6);
-		 * hlayout.addComponent(lblindirectflows,7);
-		 * hlayout.setExpandRatio(lblindirectflows,2*1.0f);
-		 */
+		
 		addStyleName("backColorGrey");
 
 		addComponent(horiprevnext);
 		addComponent(hlayoutcore);
-		// addComponent(hlayout);
-
-		// Button b = new Button("Overlay button");
-		// OverlayWindow over=new OverlayWindow(b);
-		// addComponent(b);
 		
-		// this.setExpandRatio(hlayout, 1.0f);
 		GridLayout childgrid = new GridLayout(4, 8);
 
 		childgrid.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
@@ -317,21 +368,54 @@ public class Main extends VerticalLayout implements View {
 
 		btnnext.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
-				/*
-				 * BrowserWindowOpener popupOpener = new
-				 * BrowserWindowOpener(NextPage.class);
-				 * popupOpener.setFeatures("height=4000,width=2000");
-				 * popupOpener.extend(btnnext);
-				 */
+				
 
 				mainObj.navigator.navigateTo("NextPage");
 
-				// getUI().getPage().setLocation("NextPage.class");
+				
 			}
 		});
+		
+		btnsave.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				 
+				saveConfigurationxml(filename);
+
+				
+				
+			}
+		});
+		btninstrument.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Instrumentation");
+
+				
+			}
+		});
+		btnstatic.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Main");
+
+				
+			}
+		});
+		btnruntime.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Runtime");
+
+				
+			}
+		});
+
 		btnrun.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
-				createDirectory(filename);
+				//saveConfigurationxml(filename);
 			}
 		});
 		//open new subwindow for tblsubclasses
@@ -345,7 +429,9 @@ public class Main extends VerticalLayout implements View {
         // Put some components in it
     	 ComboBox cmbtypes=new ComboBox("Types");
     	 cmbtypes.addItem("Source");
-			cmbtypes.addItem("Sink");
+		 cmbtypes.addItem("Sink");
+		 cmbtypes.setNullSelectionAllowed(false);
+		 cmbtypes.setValue("Source");
 		TextField txtclasses=new TextField("Classes");
 		TextField txtselector=new TextField("Selector");
 		TextField txtparam=new TextField("Param");		
@@ -360,104 +446,161 @@ public class Main extends VerticalLayout implements View {
         subContent.addComponent(chkinclude);
         subContent.addComponent(chkindirectcalls);
         Button btnsavetotable=new Button("Save"); 
+        
+        btnsavetotable.addClickListener(new Button.ClickListener() {
+        	int counter=0;
+        	
+        	
+        	@SuppressWarnings("unchecked")
+			public void buttonClick(ClickEvent event) {	
+				//subWindow.close();
+        		try
+				{
+        					        		
+				TextField tempClass=new TextField();
+				TextField txtTypes=new TextField();
+				TextField tempSelector=new TextField();
+				TextField tempParam=new TextField();
+				CheckBox tempIncludeSubClass=new CheckBox();
+				CheckBox tempIndirectCalls=new CheckBox();
+				
+				String text = txtclasses.getValue();
+				tempClass.setValue(text);
+				text=txtselector.getValue();
+				tempSelector.setValue(text);
+				text=txtparam.getValue();
+				tempParam.setValue(text);
+				
+				if(cmbtypes.getValue()!=null)
+				{
+				
+				//Object itemid=cmbtypes.getConvertedValue();
+				txtTypes.setValue(cmbtypes.getValue().toString());
+				}
+				
+				boolean tempbool=chkinclude.getValue();
+				tempIncludeSubClass.setValue(tempbool);
+				tempbool=chkindirectcalls.getValue();
+				tempIndirectCalls.setValue(tempbool);
+				
+				Object newItemId ;//= tblsourcensinks.addItem();
+				tblsourcensinks.getContainerPropertyIds();	
+				
+				
+				int numrows=tblsourcensinks.size();
+				newItemId=numrows+1;
+				
+				boolean isduplicate=false,isMandatoryfieldsfilled=true;
+				if(("".equalsIgnoreCase(tempClass.getValue()))||("".equalsIgnoreCase(tempSelector.getValue()))
+						||("".equalsIgnoreCase(tempParam.getValue()))
+						)isMandatoryfieldsfilled=false;
+					
+				for (int i = 1; i <(int)newItemId ; i++) 
+				{
+					Item row = tblsourcensinks.getItem(i);
+					
+					TextField txtClasses=(TextField)row.getItemProperty("Classes").getValue();
+					String strClasses=txtClasses.getValue();
+					
+					TextField txtSelector=(TextField)row.getItemProperty("Selector").getValue();
+					
+					String strSelector=txtSelector.getValue();
+					TextField txtParam=(TextField)row.getItemProperty("Param").getValue();
+					String strParam=txtParam.getValue();
+					TextField txtretTypes=(TextField)row.getItemProperty("Types").getValue();
+					String strTypes=txtretTypes.getValue();
+					CheckBox chkSubclassIncluded=(CheckBox)row.getItemProperty("Include SubClasses").getValue();
+					boolean isSubclassIncluded=chkSubclassIncluded.getValue();
+					if((strClasses.equalsIgnoreCase(tempClass.getValue()))&&(strSelector.equalsIgnoreCase(tempSelector.getValue()))
+							&&(strParam.equalsIgnoreCase(tempParam.getValue()))&&(strTypes.equalsIgnoreCase(txtTypes.getValue()))&&
+							(isSubclassIncluded==tempIncludeSubClass.getValue()))
+						isduplicate=true;
+					if(isduplicate==true)break;
+						
+				}
+				
+			    if(!isduplicate && isMandatoryfieldsfilled)
+			    {
+			    	 newItemId = tblsourcensinks.addItem();
+				Item row = tblsourcensinks.getItem(newItemId);
+				
+				
+				row.getItemProperty("Classes").setValue(tempClass);
+				
+				row.getItemProperty("Selector").setValue(tempSelector);
+				row.getItemProperty("Param").setValue(tempParam);
+				row.getItemProperty("Include SubClasses").setValue(tempIncludeSubClass);
+				row.getItemProperty("Indirect Calls").setValue(tempIndirectCalls);
+				row.getItemProperty("Types").setValue(txtTypes);
+				
+				
+				tempClass.setVisible(true);
+				tempClass.setEnabled(false);
+				tempSelector.setVisible(true);
+				tempSelector.setEnabled(false);
+				tempParam.setVisible(true);
+				tempParam.setEnabled(false);
+				tempIncludeSubClass.setVisible(true);
+				tempIncludeSubClass.setEnabled(false);
+				tempIndirectCalls.setVisible(true);
+				tempIndirectCalls.setEnabled(false);
+				txtTypes.setVisible(true);
+				txtTypes.setEnabled(false);
+				txterror.setVisible(false);
+				
+				subWindow.close();
+        		}
+			    else if(isMandatoryfieldsfilled==false)
+			    {
+			    	
+			    	Window msgbox = new Window("MessageBox");
+			    	//msgbox.addStyleName("Messageboxdesign");
+			    	
+			        FormLayout subContent = new FormLayout();
+			        Label lblmessage=new Label("Please fill all the mandatory fields");
+			        lblmessage.addStyleName("Messageboxdesign");
+			        subContent.setMargin(true);
+			        subContent.addComponent(lblmessage);
+			        msgbox.setModal(true);
+			        msgbox.setSizeUndefined();
+			        msgbox.setContent(subContent);
+			        UI.getCurrent().addWindow(msgbox);	
+			    }
+			    else
+			    {
+			    	Window msgbox = new Window("MessageBox");
+			        FormLayout subContent = new FormLayout();
+			        Label lblmessage=new Label("You cannot add the values to the table since another duplicate row is already present");
+			        subContent.setMargin(true);
+			        subContent.addComponent(lblmessage);
+			        msgbox.setModal(true);
+			        msgbox.setSizeUndefined();
+			        msgbox.setContent(subContent);
+			        UI.getCurrent().addWindow(msgbox);
+			       
+			      boolean contains= tblsourcensinks.containsId(newItemId);
+			      if(contains==true)
+			      {
+			     tblsourcensinks.removeItem(newItemId);
+			     
+			    }
+			     
+			   
+			    }
+        		}
+        		
+				catch(Exception ex){
+					System.out.println(ex.getMessage());
+						
+				}
+				
+			}
+		});
         final Subwindow subwin=new Subwindow();
         subContent.addComponent(btnsavetotable);
         // Center it in the browser window
         subWindow.center();
         
-		/*btnsubwindow.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-				
-		        
-		        // Open it in the UI
-		        
-		        UI.getCurrent().addWindow(subWindow);
-		        
-		        btnsavetotable.addClickListener(new Button.ClickListener() {
-					@SuppressWarnings("unchecked")
-					public void buttonClick(ClickEvent event) {	
-						//subWindow.close();
-						
-						try
-						{
-						
-						TextField tempClass=new TextField();
-						TextField txtTypes=new TextField();
-						TextField tempSelector=new TextField();
-						TextField tempParam=new TextField();
-						CheckBox tempIncludeSubClass=new CheckBox();
-						CheckBox tempIndirectCalls=new CheckBox();
-						
-						String text = txtclasses.getValue();
-						tempClass.setValue(text);
-						text=txtselector.getValue();
-						tempSelector.setValue(text);
-						text=txtparam.getValue();
-						tempParam.setValue(text);
-						text=cmbtypes.getValue().toString();
-						
-						Object itemid=cmbtypes.getConvertedValue();
-						txtTypes.setValue(cmbtypes.getValue().toString());
-						
-						boolean tempbool=chkinclude.getValue();
-						tempIncludeSubClass.setValue(tempbool);
-						tempbool=chkindirectcalls.getValue();
-						tempIndirectCalls.setValue(tempbool);
-					
-						Object newItemId = tblsourcensinks.addItem();
-					
-						
-					    //tblsourcensinks.addItem(new Object[] { tempClass }, newItemId);
-						
-					   // tblsourcensinks.addItem(new Object[] { tempSelector }, newItemId);
-					    //tblsourcensinks.addItem(new Object[] { tempParam }, newItemId);
-					   // tblsourcensinks.addItem(new Object[] { tempIncludeSubClass }, newItemId);
-					    //tblsourcensinks.addItem(new Object[] { tempIndirectCalls }, newItemId);
-					    //tblsourcensinks.addItem(new Object[] { tempTypes }, newItemId);
-					    
-						Item row = tblsourcensinks.getItem(newItemId);
-						
-						row.getItemProperty("Classes").setValue(tempClass);
-						
-						row.getItemProperty("Selector").setValue(tempSelector);
-						row.getItemProperty("Param").setValue(tempParam);
-						row.getItemProperty("Include SubClasses").setValue(tempIncludeSubClass);
-						row.getItemProperty("Indirect Calls").setValue(tempIndirectCalls);
-						row.getItemProperty("Types").setValue(txtTypes);
-						
-						
-						tempClass.setVisible(true);
-						tempClass.setEnabled(false);
-						tempSelector.setVisible(true);
-						tempSelector.setEnabled(false);
-						tempParam.setVisible(true);
-						tempParam.setEnabled(false);
-						tempIncludeSubClass.setVisible(true);
-						tempIncludeSubClass.setEnabled(false);
-						tempIndirectCalls.setVisible(true);
-						tempIndirectCalls.setEnabled(false);
-						txtTypes.setVisible(true);
-						txtTypes.setEnabled(false);
-						
-						
-						subWindow.close();
-						}
-						catch(Exception ex){System.out.println(ex.getMessage());}
-						
-						
-
-						
-				        
-					}
-				});
-		        
-			}
-		});*/
-		
-		
-
-		// conext menu for gridclasspath
-
 		gridclasspath.addItemClickListener(new ItemClickListener() {
 			public void itemClick(ItemClickEvent event) {
 				if (event.getButton() == MouseEventDetails.MouseButton.RIGHT) {
@@ -484,7 +627,7 @@ public class Main extends VerticalLayout implements View {
 				if (action.getCaption() == "New") {
 					TextField txt = new TextField("textfield");
 
-					// txt.setValue("Hey you");
+					txt.setWidth(24.6f, ComboBox.UNITS_EM);
 					Object newItemId = gridclasspath.addItem();
 					Item row = gridclasspath.getItem(newItemId);
 					row.getItemProperty("Classpath").setValue(txt);
@@ -552,7 +695,7 @@ public class Main extends VerticalLayout implements View {
 				if (action.getCaption() == "New") {
 					TextField txt = new TextField("textfield");
 
-					// txt.setValue("Hey you");
+					txt.setWidth(24.6f, ComboBox.UNITS_EM);
 					Object newItemId = tblthirdpartylib.addItem();
 					Item row = tblthirdpartylib.getItem(newItemId);
 					row.getItemProperty("ThirdPartyLibrary").setValue(txt);
@@ -619,8 +762,9 @@ public class Main extends VerticalLayout implements View {
 
 				if (action.getCaption() == "New") {
 					TextField txt = new TextField("textfield");
-
-					// txt.setValue("Hey you");
+					
+					txt.setWidth(24.6f, ComboBox.UNITS_EM);
+					
 					Object newItemId = tblpointstoinclude.addItem();
 					Item row = tblpointstoinclude.getItem(newItemId);
 					row.getItemProperty("Points To Include").setValue(txt);
@@ -684,7 +828,7 @@ public class Main extends VerticalLayout implements View {
 				if (action.getCaption() == "New") {
 					TextField txt = new TextField("textfield");
 
-					// txt.setValue("Hey you");
+					txt.setWidth(24.6f, ComboBox.UNITS_EM);
 					Object newItemId = tblpointstoexclude.addItem();
 					Item row = tblpointstoexclude.getItem(newItemId);
 					row.getItemProperty("Points To Exclude").setValue(txt);
@@ -748,97 +892,14 @@ public class Main extends VerticalLayout implements View {
 				if (action.getCaption() == "New") 
 				{
 					
-					
 					 // Open it in the UI
 			        UI.getCurrent().addWindow(subWindow);
-			        
-			        
-			        btnsavetotable.addClickListener(new Button.ClickListener() {
-			        	int counter=0;
-			        	
-			        	
-			        	@SuppressWarnings("unchecked")
-						public void buttonClick(ClickEvent event) {	
-							//subWindow.close();
-			        		try
-							{
-			        		counter++;
-			        		if(counter==1)
-			        		{
-							TextField tempClass=new TextField();
-							TextField txtTypes=new TextField();
-							TextField tempSelector=new TextField();
-							TextField tempParam=new TextField();
-							CheckBox tempIncludeSubClass=new CheckBox();
-							CheckBox tempIndirectCalls=new CheckBox();
-							
-							String text = txtclasses.getValue();
-							tempClass.setValue(text);
-							text=txtselector.getValue();
-							tempSelector.setValue(text);
-							text=txtparam.getValue();
-							tempParam.setValue(text);
-							
-							if(cmbtypes.getValue()!=null)
-							{
-							
-							//Object itemid=cmbtypes.getConvertedValue();
-							txtTypes.setValue(cmbtypes.getValue().toString());
-							}
-							
-							boolean tempbool=chkinclude.getValue();
-							tempIncludeSubClass.setValue(tempbool);
-							tempbool=chkindirectcalls.getValue();
-							tempIndirectCalls.setValue(tempbool);
-						
-							Object newItemId = tblsourcensinks.addItem();
-						
-							
-						    //tblsourcensinks.addItem(new Object[] { tempClass }, newItemId);
-							
-						   // tblsourcensinks.addItem(new Object[] { tempSelector }, newItemId);
-						    //tblsourcensinks.addItem(new Object[] { tempParam }, newItemId);
-						   // tblsourcensinks.addItem(new Object[] { tempIncludeSubClass }, newItemId);
-						    //tblsourcensinks.addItem(new Object[] { tempIndirectCalls }, newItemId);
-						    //tblsourcensinks.addItem(new Object[] { tempTypes }, newItemId);
-						    
-							Item row = tblsourcensinks.getItem(newItemId);
-							
-							row.getItemProperty("Classes").setValue(tempClass);
-							
-							row.getItemProperty("Selector").setValue(tempSelector);
-							row.getItemProperty("Param").setValue(tempParam);
-							row.getItemProperty("Include SubClasses").setValue(tempIncludeSubClass);
-							row.getItemProperty("Indirect Calls").setValue(tempIndirectCalls);
-							row.getItemProperty("Types").setValue(txtTypes);
-							
-							
-							tempClass.setVisible(true);
-							tempClass.setEnabled(false);
-							tempSelector.setVisible(true);
-							tempSelector.setEnabled(false);
-							tempParam.setVisible(true);
-							tempParam.setEnabled(false);
-							tempIncludeSubClass.setVisible(true);
-							tempIncludeSubClass.setEnabled(false);
-							tempIndirectCalls.setVisible(true);
-							tempIndirectCalls.setEnabled(false);
-							txtTypes.setVisible(true);
-							txtTypes.setEnabled(false);
-							
-							
-							subWindow.close();
-			        		}
-							
-							}
-							catch(Exception ex){System.out.println(ex.getMessage());}
-							
-							
+			         txtclasses.setValue("");
+					 txtselector.setValue("");;
+					txtparam.setValue("");;		
+					chkinclude.setValue(false);
+					chkindirectcalls.setValue(false);;
 
-							
-					        
-						}
-					});
 
 				}
 		else if (action.getCaption() == "Delete") {
@@ -867,40 +928,17 @@ public class Main extends VerticalLayout implements View {
 			}
 
 		});
-		/*
-		 * MenuBar.Command mycommand = new MenuBar.Command() {
-		 * 
-		 * @SuppressWarnings("deprecation") public void menuSelected(MenuItem
-		 * selectedItem) { String
-		 * value=(String)gridmain.getContainerDataSource().getContainerProperty(
-		 * rowId,"Action").getValue(); selectedItem. switch (value) { case
-		 * "Static Analysis": System.out.println(value+ "Yeah");
-		 * 
-		 * mainObj.navigator.navigateTo("/"+filename); break; case
-		 * "Instrumentation": System.out.println(value+ "Yeah");
-		 * 
-		 * mainObj.navigator.navigateTo("Instrumentation/"+filename);
-		 * 
-		 * break; case "Runtime Analysis": System.out.println(value+ "Yeah");
-		 * mainObj.navigator.navigateTo("Runtime/"+filename);
-		 * 
-		 * } }
-		 * 
-		 */ /*
-			 * @Override public void menuSelected(
-			 * com.vaadin.ui.MenuBar.MenuItem selectedItem) { // TODO
-			 * Auto-generated method stub
-			 * 
-			 * } };
-			 */
+		
 
 	}
 
-	protected void createDirectory(String Name) {
+	protected void saveConfigurationxml(String Name) 
+	{
 
 		File directory = new File(Staticanalysispath);
-		// File directory = new
-		// File("C:\\Users\\subash\\Documents\\HiwiApp\\App1");
+		String strTableData;
+		List<String> listtabledata;
+		
 		try {
 			prop.load(inputStream);
 			if (!directory.exists()) {
@@ -915,15 +953,340 @@ public class Main extends VerticalLayout implements View {
 
 			String date = new SimpleDateFormat("dd-MM-yyyy HH-mm-ss").format(new Date());
 			System.out.println(date);
-			Files.write(Paths.get(Staticanalysispath + "/" + Name + date + ".txt"), "sample".getBytes());
-			// File.createTempFile(Name+date, ".xml", directory) ;
+			Files.write(Paths.get(Staticanalysispath + "/" + Name + date + ".xml"),"".getBytes());
+			
+			//code to generate and save static analysis config xml file 
+			 
+				 
+					DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+			 
+					// root elements
+					Document doc = docBuilder.newDocument();
+					Element rootElement = doc.createElement("analysises");
+					doc.appendChild(rootElement);
+			 
+					// staff elements
+					Element analysis = doc.createElement("analysis");
+					rootElement.appendChild(analysis);
+			 
+					// set attribute to staff element
+					Attr attrname = doc.createAttribute("name");
+					attrname.setValue(buttonname);
+					analysis.setAttributeNode(attrname);
+			 
+					
+					// mode elements
+					Element mode = doc.createElement("mode");
+					
+					analysis.appendChild(mode);
+					
+					Attr attrvalue = doc.createAttribute("value");
+					attrvalue.setValue("1");
+					mode.setAttributeNode(attrvalue);
+			 
+					// classpath elements
+					Element classpath = doc.createElement("classpath");
+					
+					analysis.appendChild(classpath);
+					Attr attrvalueclasspath = doc.createAttribute("value");
+					listtabledata=Readfromcommontable(gridclasspath);
+					strTableData="";
+					for (int i = 0; i<listtabledata.size(); i++) 
+					{  if(i!=0 &&i!=listtabledata.size()-1)
+						strTableData=strTableData+"::"+listtabledata.get(i);
+					else strTableData=strTableData+listtabledata.get(i);
+					}
+					
+					attrvalueclasspath.setValue(strTableData);
+					classpath.setAttributeNode(attrvalueclasspath);
+			 
+					// thirdpartylib elements
+					Element thirdPartyLibs = doc.createElement("thirdPartyLibs");
+					
+					analysis.appendChild(thirdPartyLibs);
+					
+					Attr attrvaluetpl = doc.createAttribute("value");
+					listtabledata=Readfromcommontable(tblthirdpartylib);
+					strTableData="";
+					for (int i = 0; i<listtabledata.size(); i++) 
+					{  if(i!=0 &&i!=listtabledata.size()-1)
+						strTableData=strTableData+"::"+listtabledata.get(i);
+					else strTableData=strTableData+listtabledata.get(i);
+					}
+					attrvaluetpl.setValue(strTableData);
+					thirdPartyLibs.setAttributeNode(attrvaluetpl);
+			 
+					// stubs elements
+					Element stubs = doc.createElement("stubs");
+					//stubs.appendChild(doc.createTextNode("100000"));
+					analysis.appendChild(stubs);
+					
+					Attr attrvaluestub = doc.createAttribute("value");
+					attrvaluestub.setValue("1");
+					classpath.setAttributeNode(attrvaluestub);
+					
+					Element entrypoint = doc.createElement("entrypoint");
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-			System.out.println(e.getMessage());
+
+					analysis.appendChild(entrypoint);
+					
+					Attr attrvalueentry = doc.createAttribute("value");
+					attrvalueentry.setValue("1");
+					entrypoint.setAttributeNode(attrvalueentry);
+					Element pointsto = doc.createElement("points-to");
+					
+					analysis.appendChild(pointsto);
+					Attr attrpolicy = doc.createAttribute("policy");
+					
+					attrpolicy.setValue("1");
+					pointsto.setAttributeNode(attrpolicy);
+					Attr attrfallback = doc.createAttribute("fallback");
+					attrfallback.setValue("1");
+					pointsto.setAttributeNode(attrfallback);
+										//read data from points to include and exclude
+					listtabledata=Readfromcommontable(tblpointstoinclude);
+					strTableData="";
+					
+					for (int i = 0; i<listtabledata.size(); i++) 
+					{ 
+						Element includeclass = doc.createElement("include-classes");
+						pointsto.appendChild(includeclass);
+					Attr attriincludeclass = doc.createAttribute("value");
+					attriincludeclass.setValue(listtabledata.get(i));
+					includeclass.setAttributeNode(attriincludeclass);
+					}
+					
+					listtabledata=Readfromcommontable(tblpointstoexclude);
+					strTableData="";
+					for (int i = 0; i<listtabledata.size(); i++) 
+					{  
+						Element excludeclass = doc.createElement("exclude-classes");
+						pointsto.appendChild(excludeclass);
+					Attr attriexcludeclass = doc.createAttribute("value");
+					attriexcludeclass.setValue(listtabledata.get(i));
+					excludeclass.setAttributeNode(attriexcludeclass);
+					}
+					//ends
+					
+					
+					
+					
+					Element ignoreIndirectFlows = doc.createElement("ignoreIndirectFlows");
+					
+					analysis.appendChild(ignoreIndirectFlows);
+					Attr attrignoreindirect = doc.createAttribute("value");
+					attrignoreindirect.setValue("1");
+					ignoreIndirectFlows.setAttributeNode(attrignoreindirect);
+					
+					Element multithreaded = doc.createElement("multithreaded");
+					
+					analysis.appendChild(multithreaded);
+					Attr attrmultith = doc.createAttribute("value");
+					attrmultith.setValue("1");
+					multithreaded.setAttributeNode(attrmultith);
+					
+					Element sdgfile = doc.createElement("sdgfile");
+					
+					analysis.appendChild(sdgfile);
+					Attr attrsdg = doc.createAttribute("value");
+					attrsdg.setValue("1");
+					sdgfile.setAttributeNode(attrsdg);
+					
+					Element cgfile = doc.createElement("cgfile");
+										
+					analysis.appendChild(cgfile);
+					Attr attrcgfile = doc.createAttribute("value");
+					attrcgfile.setValue("1");
+					cgfile.setAttributeNode(attrcgfile);
+					
+					Element reportfile = doc.createElement("reportfile");
+					
+					analysis.appendChild(reportfile);
+					Attr attrreport = doc.createAttribute("value");
+					attrreport.setValue("1");
+					reportfile.setAttributeNode(attrreport);
+					
+					Element computeChops = doc.createElement("computeChops");
+					
+					analysis.appendChild(computeChops);
+					Attr attrcompute = doc.createAttribute("value");
+					attrcompute.setValue("1");
+					computeChops.setAttributeNode(attrcompute);
+					
+					Element systemout = doc.createElement("systemout");
+					
+					analysis.appendChild(systemout);
+					Attr attrsystemout = doc.createAttribute("value");
+					attrsystemout.setValue("1");
+					systemout.setAttributeNode(attrsystemout);
+					
+					Element objectsensitivenes = doc.createElement("objectsensitivenes");
+					
+					analysis.appendChild(objectsensitivenes);
+					Attr attrsensitive = doc.createAttribute("value");
+					attrsensitive.setValue("1");
+					objectsensitivenes.setAttributeNode(attrsensitive);
+					
+					Element sourcesandsinks = doc.createElement("sourcesandsinks");					
+					analysis.appendChild(sourcesandsinks);
+					//read tablesourcensinks data
+					List<Map<String, String>> listdatasourcensinks= ReadfromSourcenSinkstable(tblsourcensinks);
+					
+					 
+					for (int i = 0; i<listdatasourcensinks.size(); i++) 
+					{
+						if(listdatasourcensinks.get(i).get("Types")=="Source")
+						{
+						Element source = doc.createElement("source");
+						sourcesandsinks.appendChild(source);
+						Attr classvalue = doc.createAttribute("Classes");
+						classvalue.setValue(listdatasourcensinks.get(i).get("Classes"));
+						source.setAttributeNode(classvalue);
+						Attr selectorvalue = doc.createAttribute("selector");
+						selectorvalue.setValue(listdatasourcensinks.get(i).get("Selector"));
+						source.setAttributeNode(selectorvalue);
+						Attr paramsvalue = doc.createAttribute("params");
+						paramsvalue.setValue(listdatasourcensinks.get(i).get("Param"));
+						source.setAttributeNode(paramsvalue);
+						if(listdatasourcensinks.get(i).get("Include SubClasses")!="")
+						{
+						Attr includeclassvalue = doc.createAttribute("includeSubclasses");
+						includeclassvalue.setValue(listdatasourcensinks.get(i).get("Include SubClasses"));
+						source.setAttributeNode(includeclassvalue);
+						}
+						if(listdatasourcensinks.get(i).get("Indirect Calls")!="")
+						{
+						Attr indirectcallsvalue = doc.createAttribute("indirectCalls");
+						indirectcallsvalue.setValue(listdatasourcensinks.get(i).get("Indirect Calls"));
+						source.setAttributeNode(indirectcallsvalue);						
+						}
+						}
+						else if(listdatasourcensinks.get(i).get("Types")=="Sink")
+						{
+							Element sink = doc.createElement("sink");
+							sourcesandsinks.appendChild(sink);
+							Attr classvalue = doc.createAttribute("Classes");
+							classvalue.setValue(listdatasourcensinks.get(i).get("Classes"));
+							sink.setAttributeNode(classvalue);
+							Attr selectorvalue = doc.createAttribute("selector");
+							selectorvalue.setValue(listdatasourcensinks.get(i).get("Selector"));
+							sink.setAttributeNode(selectorvalue);
+							Attr paramsvalue = doc.createAttribute("params");
+							paramsvalue.setValue(listdatasourcensinks.get(i).get("Param"));
+							sink.setAttributeNode(paramsvalue);
+							Attr includeclassvalue = doc.createAttribute("includeSubclasses");
+							includeclassvalue.setValue(listdatasourcensinks.get(i).get("Include SubClasses"));
+							sink.setAttributeNode(includeclassvalue);
+							Attr indirectcallsvalue = doc.createAttribute("indirectCalls");
+							indirectcallsvalue.setValue(listdatasourcensinks.get(i).get("Indirect Calls"));
+							sink.setAttributeNode(indirectcallsvalue);
+
+						}
+					}
+					
+					
+					// write the content into xml file
+					TransformerFactory transformerFactory = TransformerFactory.newInstance();
+					Transformer transformer = transformerFactory.newTransformer();
+					DOMSource source = new DOMSource(doc);
+					StreamResult result = new StreamResult(new File(Staticanalysispath + "/" + Name + date + ".xml"));
+			 
+					
+			 
+					transformer.transform(source, result);
+			 
+					System.out.println("File saved!");
+			 
+				  } catch (ParserConfigurationException pce) {
+					pce.printStackTrace();
+				  } catch (TransformerException tfe) {
+					tfe.printStackTrace();
+				  } catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				}
+			
+			//code ends
+
+		
+private List<String> Readfromcommontable(Table tablename)
+{
+	
+	List<String> strpaths=new ArrayList<>();
+	int newItemId=tablename.size();
+	try
+	{
+	for (int i = 1; i <=newItemId; i++) 
+	{
+		Item row = tablename.getItem(i);
+		TextField temp=new TextField();
+		if(tablename.getCaption()=="ClassPath")
+		{
+			 temp=(TextField)row.getItemProperty("Classpath").getValue();	
+		
 		}
+		else if(tablename.getCaption()=="Third Party Library")
+			 temp=(TextField)row.getItemProperty("ThirdPartyLibrary").getValue();	
+		else if(tablename.getCaption()=="Points To Include")
+			 temp=(TextField)row.getItemProperty("Points To Include").getValue();
+		else if(tablename.getCaption()=="Points To Exclude")
+			 temp=(TextField)row.getItemProperty("Points To Exclude").getValue();
+		
+		strpaths.add(temp.getValue());
 	}
+	}
+	catch(Exception ex){System.out.println(ex.getMessage());}
+	return strpaths;
+	
+	
+	
+	
+	
+	
+}
+private List<Map<String, String>> ReadfromSourcenSinkstable(Table tablename)
+{
+	List<Map<String, String>> listsnsinks=new ArrayList<Map<String, String>>();
+	
+	
+	int newItemId=tablename.size();
+	for (int i = 1; i <=newItemId; i++) 
+	{   Map<String, String> listmapvalues=new HashMap<String, String>();
+	    
+		Item row = tablename.getItem(i);
+		TextField temp=new TextField();
+		CheckBox chktemp=new CheckBox();
+		
+				 temp=(TextField)row.getItemProperty("Types").getValue();
+			 listmapvalues.put("Types",temp.getValue());
+			 temp=(TextField)row.getItemProperty("Classes").getValue();
+			 listmapvalues.put("Classes",temp.getValue());
+			 temp=(TextField)row.getItemProperty("Selector").getValue();	
+			 listmapvalues.put("Selector",temp.getValue());
+			 temp=(TextField)row.getItemProperty("Param").getValue();
+			 listmapvalues.put("Param",temp.getValue());
+			 chktemp=(CheckBox)row.getItemProperty("Include SubClasses").getValue();
+			if(chktemp!=null)
+			 listmapvalues.put("Include SubClasses",Boolean.toString(chktemp.getValue()));
+			else listmapvalues.put("Include SubClasses","");
+			 chktemp=(CheckBox)row.getItemProperty("Indirect Calls").getValue();
+			 if(chktemp!=null)
+			 listmapvalues.put("Indirect Calls",Boolean.toString(chktemp.getValue()));
+			 else listmapvalues.put("Include SubClasses","");
+			 listsnsinks.add(listmapvalues);
+		
+		
+	}
+	return listsnsinks;
+	
+	
+	
+	
+	
+	
+}
 
 	public Field<?> getComboBox(String requiredErrorMsg, List<String> items) {
 
@@ -957,5 +1320,7 @@ public class Main extends VerticalLayout implements View {
 		// TODO Auto-generated method stub
 
 	}
+	
+
 	//
 }

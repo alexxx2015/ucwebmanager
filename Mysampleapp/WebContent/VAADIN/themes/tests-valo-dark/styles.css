@@ -12379,6 +12379,7 @@ div.v-layout.v-horizontal.v-widget {
 	overflow: hidden;
 }
 
-.tests-valo-dark .backColorGrey {
-	background-color: #EB1E4B;
+.tests-valo-dark .Messageboxdesign {
+	background: #ffffc0;
+	font-style: italic;
 }

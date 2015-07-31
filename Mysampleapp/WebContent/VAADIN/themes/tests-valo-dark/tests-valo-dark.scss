@@ -20,9 +20,14 @@ $v-component-group-spacing: 6px;
 @mixin tests-valo-dark {
   @include valo;
 
-  .backColorGrey
+  .Messageboxdesign
   {
-     background-color: #EB1E4B;
+    // background-color: #ffffc0;
+     background: #ffffc0;
+     font-style: italic;
+     //font-color: red
+     //color: #B4886B
+     
   }
   }
 
