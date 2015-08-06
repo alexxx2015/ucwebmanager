@@ -30,22 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -416,7 +400,7 @@ Connection conn=null;
 
 }    @Override
 	 public OutputStream receiveUpload(String filename, String MIMEType) {
-OutputStream fos = null; // Output stream to write to
+	FileOutputStream fos = null; // Output stream to write to
 File file = new File("UploadFilePath" + filename);
 try {
 // Open the file for writing.

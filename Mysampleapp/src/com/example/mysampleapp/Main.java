@@ -25,11 +25,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.openqa.selenium.remote.server.handler.interactions.touch.Up;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.vaadin.annotations.Theme;
+import com.vaadin.client.ui.LayoutClickEventHandler;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
@@ -37,6 +39,8 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.Action;
 import com.vaadin.event.ItemClickEvent;
 import com.vaadin.event.ItemClickEvent.ItemClickListener;
+import com.vaadin.event.LayoutEvents.LayoutClickEvent;
+import com.vaadin.event.LayoutEvents.LayoutClickListener;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
@@ -44,6 +48,9 @@ import com.vaadin.shared.MouseEventDetails;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
+import com.vaadin.ui.Upload.Receiver;
+import com.vaadin.ui.Upload.SucceededEvent;
+import com.vaadin.ui.Upload.SucceededListener;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Field;
@@ -63,7 +70,7 @@ import com.vaadin.ui.Window;
 
 @SuppressWarnings("serial")
 @Theme("tests-valo-dark")
-public class Main extends VerticalLayout implements View {
+public class Main extends VerticalLayout implements  View , Receiver, SucceededListener {
 	MysampleappUI mainObj;
 	static String filename, Staticanalysispath;
 	static int buttonnum = 0;
@@ -77,10 +84,22 @@ public class Main extends VerticalLayout implements View {
 	String sdgvalue,cgvalue;
 	boolean ignoreindirectflowvalue;
 	boolean computechopsvalue,objectsensitivevalue;
-	String snsfilevalue;
-
+	String snsfilevalue,strUploadFilePathCG;
+    Object itemid,selecteditemidsns;
 	OutputStream output = null;
 	Table gridclasspath,tblthirdpartylib,tblpointstoinclude,tblpointstoexclude, tblsourcensinks ;
+	TextField txtfldSnSFile = new TextField("File Name");
+	TextField txtfldname = new TextField("Analysis Name");
+	CheckBox chkmultithreaded = new CheckBox("Multithreaded");
+	CheckBox chkcomputechops = new CheckBox("Compute Chops");
+	CheckBox chksensitiveness = new CheckBox("Object Sensitiveness");
+	CheckBox chkindirectflows = new CheckBox("Indirect Flows");
+	TextField txtSDGFile = new TextField("SDGFile");
+	TextField txtCGFile = new TextField("CGFile");
+	TextField txtReportFile = new TextField("Report File");
+	TextField txtpointtofallback = new TextField("Points To Fallback");
+	ComboBox cmbmode = new ComboBox("Mode");
+	
 
 	@SuppressWarnings("deprecation")
 	public Main(MysampleappUI o) { // final VerticalLayout layout = new
@@ -99,6 +118,7 @@ public class Main extends VerticalLayout implements View {
 			prop.setProperty("database", "localhost");
 			prop.setProperty("dbuser", "mkyong");
 			prop.setProperty("dbpassword", "password");
+			strUploadFilePathCG=prop.getProperty("UploadFilePath");
 
 			// save properties to project root folder
 			prop.store(output, null);
@@ -115,10 +135,7 @@ public class Main extends VerticalLayout implements View {
 		ComboBox cmbselectpr = new ComboBox();
 		cmbselectpr.setCaption("Select Program");
 
-		CheckBox chkmultithreaded = new CheckBox("Multithreaded");
-		CheckBox chkcomputechops = new CheckBox("Compute Chops");
-		CheckBox chksensitiveness = new CheckBox("Object Sensitiveness");
-		CheckBox chkindirectflows = new CheckBox("Indirect Flows");
+		
 		Label lblmultithreaded = new Label("Multithreaded");
 		Label lblcomputechops = new Label("Compute Chops");
 		Label lblsensitiveness = new Label("Object Sensitiveness");
@@ -132,26 +149,27 @@ public class Main extends VerticalLayout implements View {
 		// Label lblSDGFile=new Label("SDGFile");
 		// Label lblCGFile=new Label("CGFile");
 		// Label lblReportFile=new Label("Report File");
-		TextField txtSDGFile = new TextField("SDGFile");
-		TextField txtCGFile = new TextField("CGFile");
-		TextField txtReportFile = new TextField("Report File");
-		TextField txtpointtofallback = new TextField("Points To Fallback");
+		//TextField txtfldSnSFile = new TextField("File Name");
+		
 		txtSDGFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtCGFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtReportFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtpointtofallback.setWidth(24.6f, ComboBox.UNITS_EM);
-		Upload uploadSDGFile = new Upload();
+		Upload uploadSDGFile = new Upload("",this);
 
 		// uploadSDGFile.setButtonCaption("Browse");
-		Upload uploadCGFile = new Upload();
+		Upload uploadCGFile = new Upload("",this);
+		uploadCGFile.addSucceededListener(this);	
+		Upload uploadSnSfile=new Upload("",this);
+		uploadSnSfile.addSucceededListener(this);
 		// uploadCGFile.setButtonCaption("Browse");
 
-		TextField txtfldname = new TextField("Analysis Name");
+		
 		txtfldname.setWidth(24.6f, ComboBox.UNITS_EM);
 		IndexedContainer cmbocontainer = new IndexedContainer();
 		cmbocontainer.addContainerProperty("name", String.class, null);
 
-		ComboBox cmbmode = new ComboBox("Mode");
+		
 		cmbmode.setNullSelectionAllowed(false);
 		
 		cmbmode.addItem("load");
@@ -318,6 +336,7 @@ public class Main extends VerticalLayout implements View {
 		//fl.addComponent(btnselectsnsFile);
 		
 		fl.addComponent(tblsourcensinks);
+		fl.addComponent(uploadSnSfile);
 		//fl.addComponent(txterror);
 		fl.addComponent(chkmultithreaded);
 		fl.addComponent(chksensitiveness);
@@ -325,6 +344,7 @@ public class Main extends VerticalLayout implements View {
 		fl.addComponent(chkcomputechops);
 		fl.addComponent(btnsave);
 		fl.addComponent(btnrun);
+		
 		fl.setMargin(true);
 		//assign values to global variables
 		analysisname=txtfldname.getValue();
@@ -333,6 +353,7 @@ public class Main extends VerticalLayout implements View {
 		multhithreaded=chkmultithreaded.getValue();
 		computechopsvalue=chkcomputechops.getValue();
 		objectsensitivevalue=chksensitiveness.getValue();
+		snsfilevalue=txtfldSnSFile.getValue();
 		
 		//assigning values ends
 
@@ -347,6 +368,8 @@ public class Main extends VerticalLayout implements View {
 
 		hlayoutcore.addComponent(vlayoutmenu);
 		hlayoutcore.addComponent(pnltables);
+		Button buttonnam = new Button(buttonname);
+		addComponent(buttonnam);
 		
 
 		//
@@ -379,12 +402,13 @@ public class Main extends VerticalLayout implements View {
 		btnsave.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				 
-				saveConfigurationxml(filename);
+				saveConfigurationxml("Static Analysis");
 
 				
 				
 			}
 		});
+		
 		btninstrument.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				
@@ -609,6 +633,45 @@ public class Main extends VerticalLayout implements View {
 			}
 
 		});
+		tblthirdpartylib.addItemClickListener(new ItemClickListener() {
+			public void itemClick(ItemClickEvent event) {
+				if (event.isDoubleClick()) 
+				{
+					Object newItemId = tblthirdpartylib.getValue();
+					newItemId=event.getItemId();
+					itemid=newItemId;
+					Item row = tblthirdpartylib.getItem(newItemId);
+					TextField txt=(TextField)row.getItemProperty("ThirdPartyLibrary").getValue();
+					
+					txt.setEnabled(true);
+					Button buttonnam = new Button(buttonname);
+					addComponent(buttonnam);
+					buttonnam.setClickShortcut(KeyCode.ENTER);
+					buttonnam.addClickListener(new Button.ClickListener()
+					{
+						public void buttonClick(ClickEvent event)
+						{
+							
+							
+							tblthirdpartylib.addItem(new Object[] { txt }, itemid);
+							Item row = tblthirdpartylib.getItem(itemid);
+							row.getItemProperty("ThirdPartyLibrary").setValue(txt);
+							System.out.println(
+									"the value of row added is " + row.getItemProperty("ThirdPartyLibrary").getValue());
+
+							txt.setEnabled(false);
+							txt.setVisible(true);
+							buttonnam.removeClickShortcut();
+							removeComponent(buttonnam);
+
+							
+							
+						}
+					});
+				}
+			}
+
+		});
 		gridclasspath.addActionHandler(new Action.Handler() {
 			public Action[] getActions(Object target, Object sender) {
 				final Action ACTION_NEW = new Action("New");
@@ -669,14 +732,8 @@ public class Main extends VerticalLayout implements View {
 		// context menu ends
 
 		// context menu for thirdpartylibrary
-		tblthirdpartylib.addItemClickListener(new ItemClickListener() {
-			public void itemClick(ItemClickEvent event) {
-				if (event.getButton() == MouseEventDetails.MouseButton.RIGHT) {
-					tblthirdpartylib.select(event.getItemId());
-				}
-			}
-
-		});
+		
+		
 		tblthirdpartylib.addActionHandler(new Action.Handler() {
 			public Action[] getActions(Object target, Object sender) {
 				final Action ACTION_NEW = new Action("New");
@@ -686,38 +743,42 @@ public class Main extends VerticalLayout implements View {
 				return ACTIONS;
 
 			}
-
+			
+			
+			
 			@Override
 			public void handleAction(Action action, Object sender, Object target) {
 
 				Item rowItem = tblthirdpartylib.getItem(target);
 
 				if (action.getCaption() == "New") {
+					
 					TextField txt = new TextField("textfield");
-
 					txt.setWidth(24.6f, ComboBox.UNITS_EM);
 					Object newItemId = tblthirdpartylib.addItem();
 					Item row = tblthirdpartylib.getItem(newItemId);
 					row.getItemProperty("ThirdPartyLibrary").setValue(txt);
 
 					tblthirdpartylib.addItem(new Object[] { txt }, newItemId);
-					Button buttonnam = new Button(buttonname);
-					addComponent(buttonnam);
+					
+					Button buttonnamin = new Button(buttonname);
+					addComponent(buttonnamin);
 
-					buttonnam.setClickShortcut(KeyCode.ENTER);
-					buttonnam.addClickListener(new Button.ClickListener() {
+					buttonnamin.setClickShortcut(KeyCode.ENTER);
+					buttonnamin.addClickListener(new Button.ClickListener() {
 						@Override
 						public void buttonClick(ClickEvent event) {
-							tblthirdpartylib.addItem(new Object[] { txt }, newItemId);
-							Item row = tblthirdpartylib.getItem(newItemId);
-							row.getItemProperty("ThirdPartyLibrary").setValue(txt);
-							System.out.println(
-									"the value of row added is " + row.getItemProperty("ThirdPartyLibrary").getValue());
+							//tblthirdpartylib.addItem(new Object[] { txt }, newItemId);
+							//Item row = tblthirdpartylib.getItem(newItemId);
+							//row.getItemProperty("ThirdPartyLibrary").setValue(txt);
+							//System.out.println(
+							//		"the value of row added is " + row.getItemProperty("ThirdPartyLibrary").getValue());
 
-							txt.setEnabled(false);
+							//txt.setEnabled(false);
 							txt.setVisible(true);
-							buttonnam.removeClickShortcut();
-							removeComponent(buttonnam);
+							
+							buttonnamin.removeClickShortcut();
+							removeComponent(buttonnamin);
 
 						}
 					});
@@ -733,6 +794,16 @@ public class Main extends VerticalLayout implements View {
 
 			}
 		});
+		 tblthirdpartylib.addListener(new ItemClickEvent.ItemClickListener() {
+	           
+
+	            public void itemClick(ItemClickEvent event) {
+	                if (event.isDoubleClick()) 
+	                {
+	                txtfldthirdpartylib.setEnabled(true);   
+	                }
+	            }
+	        });
 
 		// context menu ends
 
@@ -865,11 +936,20 @@ public class Main extends VerticalLayout implements View {
 			}
 		});
 		// ends
+		
 		// context menu for table sourcensinks
 		tblsourcensinks.addItemClickListener(new ItemClickListener() {
-			public void itemClick(ItemClickEvent event) {
-				if (event.getButton() == MouseEventDetails.MouseButton.RIGHT) {
+			public void itemClick(ItemClickEvent event)
+			{
+				if (event.getButton() == MouseEventDetails.MouseButton.RIGHT) 
+				{
 					tblsourcensinks.select(event.getItemId());
+				}
+				else if(event.isDoubleClick())
+				{
+					UI.getCurrent().addWindow(subWindow);
+					Object selecteditemidsns=event.getItemId();
+					
 				}
 			}
 
@@ -889,6 +969,7 @@ public class Main extends VerticalLayout implements View {
 
 				Item rowItem = tblsourcensinks.getItem(target);
 
+				
 				if (action.getCaption() == "New") 
 				{
 					
@@ -910,8 +991,7 @@ public class Main extends VerticalLayout implements View {
 
 			}
 		});
-
-		// ends
+		
 		cmbmode.addValueChangeListener(new Property.ValueChangeListener() {
 			private static final long serialVersionUID = -5188369735622627751L;
 
@@ -972,7 +1052,7 @@ public class Main extends VerticalLayout implements View {
 			 
 					// set attribute to staff element
 					Attr attrname = doc.createAttribute("name");
-					attrname.setValue(buttonname);
+					attrname.setValue(txtfldname.getValue());
 					analysis.setAttributeNode(attrname);
 			 
 					
@@ -982,7 +1062,7 @@ public class Main extends VerticalLayout implements View {
 					analysis.appendChild(mode);
 					
 					Attr attrvalue = doc.createAttribute("value");
-					attrvalue.setValue("1");
+					attrvalue.setValue((String)cmbmode.getValue());
 					mode.setAttributeNode(attrvalue);
 			 
 					// classpath elements
@@ -997,8 +1077,8 @@ public class Main extends VerticalLayout implements View {
 						strTableData=strTableData+"::"+listtabledata.get(i);
 					else strTableData=strTableData+listtabledata.get(i);
 					}
-					
-					attrvalueclasspath.setValue(strTableData);
+					String strClasspath=strTableData;
+					attrvalueclasspath.setValue(strClasspath);
 					classpath.setAttributeNode(attrvalueclasspath);
 			 
 					// thirdpartylib elements
@@ -1014,7 +1094,8 @@ public class Main extends VerticalLayout implements View {
 						strTableData=strTableData+"::"+listtabledata.get(i);
 					else strTableData=strTableData+listtabledata.get(i);
 					}
-					attrvaluetpl.setValue(strTableData);
+					String tblvalue=strTableData;
+					attrvaluetpl.setValue(tblvalue);
 					thirdPartyLibs.setAttributeNode(attrvaluetpl);
 			 
 					// stubs elements
@@ -1023,7 +1104,7 @@ public class Main extends VerticalLayout implements View {
 					analysis.appendChild(stubs);
 					
 					Attr attrvaluestub = doc.createAttribute("value");
-					attrvaluestub.setValue("1");
+					attrvaluestub.setValue("");
 					classpath.setAttributeNode(attrvaluestub);
 					
 					Element entrypoint = doc.createElement("entrypoint");
@@ -1184,13 +1265,18 @@ public class Main extends VerticalLayout implements View {
 
 						}
 					}
+					Element Fileelement = doc.createElement("File");
+					sourcesandsinks.appendChild(Fileelement);
+					Attr Filevalue = doc.createAttribute("value");
+					Filevalue.setValue(txtfldSnSFile.getValue());
+					Fileelement.setAttributeNode(Filevalue);
 					
 					
 					// write the content into xml file
 					TransformerFactory transformerFactory = TransformerFactory.newInstance();
 					Transformer transformer = transformerFactory.newTransformer();
 					DOMSource source = new DOMSource(doc);
-					StreamResult result = new StreamResult(new File(Staticanalysispath + "/" + Name + date + ".xml"));
+					StreamResult result = new StreamResult(new File(Staticanalysispath + "/" + "Static Analysis" + date + ".xml"));
 			 
 					
 			 
@@ -1246,6 +1332,8 @@ private List<String> Readfromcommontable(Table tablename)
 	
 	
 }
+
+
 private List<Map<String, String>> ReadfromSourcenSinkstable(Table tablename)
 {
 	List<Map<String, String>> listsnsinks=new ArrayList<Map<String, String>>();
@@ -1320,6 +1408,46 @@ private List<Map<String, String>> ReadfromSourcenSinkstable(Table tablename)
 		// TODO Auto-generated method stub
 
 	}
+
+	@Override
+	public void uploadSucceeded(SucceededEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public OutputStream receiveUpload(String filename, String mimeType) {
+		
+		File directory = new File(Staticanalysispath);
+		if (!directory.exists()) {
+			if (directory.mkdirs()) 
+			{
+				System.out.println("Directory is created!");
+
+			} 
+		}
+		OutputStream fos = null; // Output stream to write to
+		File file = new File(strUploadFilePathCG + filename);
+		//file.renameTo(new File(strUploadFilePathCG + filename));
+		
+		try {
+		// Open the file for writing.
+		fos = new FileOutputStream(file);
+		} 
+		catch (final java.io.FileNotFoundException e) 
+		{
+		// Error while opening the file. Not reported here.
+		e.printStackTrace();
+		return null;
+		}
+
+		return fos; // Return the output stream to write to
+	}
+	 public void uploadFailed(Upload.FailedEvent event) 
+	    {
+	        // Log the failure on screen.
+	       
+	    }
 	
 
 	//
