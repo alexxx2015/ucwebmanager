@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<analysises>
+	<analysis name="analysis-my-jzip">
+		<mode value="build"/>
+		<classpath value="/home/alex/ws_default/JZip/bin"/>
+		<thirdPartyLibs value="examples/lib/commons-cli-1.2.jar"/>
+		<stubs value="JRE_14"/>
+		<entrypoint value="jzip.JZip.main([Ljava/lang/String;)V"/>
+		<points-to policy="OBJECT_SENSITIVE" fallback="3">
+			<include-classes value="LJZip/.*"/>
+			<include-classes value="Ljava/util/Properties"/>
+			<include-classes value="Ljava/io/ZipOutputStream"/>
+		</points-to>
+		<ignoreIndirectFlows value="true"/>
+		<multithreaded value="false"/>
+		<sdgfile value="jzip.jzip.pdg"/>
+		<cgfile value="jzip.jzip.cg"/>
+		<reportfile value="report-jzip-jzip.xml"/>
+		<computeChops value="false"/>
+		<systemout value="true"/>
+		<objectsensitivenes value="true"/>
+		<sourcesandsinks>
+			<file value="./sourcesandsinks.xml"/>
+		</sourcesandsinks>
+	</analysis>
+</analysises>

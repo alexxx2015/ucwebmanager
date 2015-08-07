@@ -25,13 +25,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.openqa.selenium.remote.server.handler.interactions.touch.Up;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import com.vaadin.annotations.Theme;
-import com.vaadin.client.ui.LayoutClickEventHandler;
 import com.vaadin.data.Item;
 import com.vaadin.data.Property;
 import com.vaadin.data.Property.ValueChangeEvent;
@@ -39,8 +37,6 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.Action;
 import com.vaadin.event.ItemClickEvent;
 import com.vaadin.event.ItemClickEvent.ItemClickListener;
-import com.vaadin.event.LayoutEvents.LayoutClickEvent;
-import com.vaadin.event.LayoutEvents.LayoutClickListener;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
@@ -48,9 +44,6 @@ import com.vaadin.shared.MouseEventDetails;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.Upload.Receiver;
-import com.vaadin.ui.Upload.SucceededEvent;
-import com.vaadin.ui.Upload.SucceededListener;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Field;
@@ -65,6 +58,9 @@ import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Upload;
+import com.vaadin.ui.Upload.Receiver;
+import com.vaadin.ui.Upload.SucceededEvent;
+import com.vaadin.ui.Upload.SucceededListener;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
@@ -79,7 +75,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 	String propFileName = "Config.properties";//
 	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 	//create global variables
-	String analysisname,modvalue,classpath,thirdpartylib,stubs;
+	String analysisname,modvalue,classpath,thirdpartylib,stubs,temppath;
 	boolean multhithreaded;
 	String sdgvalue,cgvalue;
 	boolean ignoreindirectflowvalue;
@@ -94,11 +90,24 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 	CheckBox chkcomputechops = new CheckBox("Compute Chops");
 	CheckBox chksensitiveness = new CheckBox("Object Sensitiveness");
 	CheckBox chkindirectflows = new CheckBox("Indirect Flows");
+	CheckBox chkSystemOut = new CheckBox("System Out");
 	TextField txtSDGFile = new TextField("SDGFile");
 	TextField txtCGFile = new TextField("CGFile");
 	TextField txtReportFile = new TextField("Report File");
 	TextField txtpointtofallback = new TextField("Points To Fallback");
 	ComboBox cmbmode = new ComboBox("Mode");
+	ComboBox cmbstub = new ComboBox("stubs");
+	ComboBox cmbpointstopolicy = new ComboBox("Points To Policy");
+	Upload uploadSDGFile = new Upload("SDGFile",this);
+	Upload uploadReportFile = new Upload("reportFile",this);
+	Label lblsuccessmessageCG,lblsuccessmessageReport,lblsuccessmessageSDG; 
+	TextField txtfldEntryPoint = new TextField("Entry Point");
+	StaticAnalyser analyser;
+	String Projectlocation;
+	
+
+	// uploadSDGFile.setButtonCaption("Browse");
+	Upload uploadCGFile = new Upload("CGFile",this);
 	
 
 	@SuppressWarnings("deprecation")
@@ -115,6 +124,8 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 			prop.load(inputStream);
 			output = new FileOutputStream("config.properties");
 			Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
+			String temppath=new File("").getAbsolutePath()+"/StaticAnalysis";
+			System.out.println("relativepath is  is "+temppath+ " and absolutepath is "+Staticanalysispath);
 			prop.setProperty("database", "localhost");
 			prop.setProperty("dbuser", "mkyong");
 			prop.setProperty("dbpassword", "password");
@@ -135,6 +146,9 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		ComboBox cmbselectpr = new ComboBox();
 		cmbselectpr.setCaption("Select Program");
 
+		lblsuccessmessageCG=new Label();
+		lblsuccessmessageReport=new Label();
+		lblsuccessmessageSDG=new Label();
 		
 		Label lblmultithreaded = new Label("Multithreaded");
 		Label lblcomputechops = new Label("Compute Chops");
@@ -155,14 +169,19 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		txtCGFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtReportFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtpointtofallback.setWidth(24.6f, ComboBox.UNITS_EM);
-		Upload uploadSDGFile = new Upload("",this);
-
-		// uploadSDGFile.setButtonCaption("Browse");
-		Upload uploadCGFile = new Upload("",this);
+		cmbmode.setWidth(24.6f, ComboBox.UNITS_EM);
+		cmbstub.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtfldEntryPoint.setWidth(24.6f, ComboBox.UNITS_EM);
+		cmbpointstopolicy.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtfldSnSFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		Projectlocation=new File("").getAbsolutePath();
+		
 		uploadCGFile.addSucceededListener(this);	
-		Upload uploadSnSfile=new Upload("",this);
+		uploadSDGFile.addSucceededListener(this);
+		uploadReportFile.addSucceededListener(this);
+		Upload uploadSnSfile=new Upload("Source and sink File",this);
 		uploadSnSfile.addSucceededListener(this);
-		// uploadCGFile.setButtonCaption("Browse");
+		
 
 		
 		txtfldname.setWidth(24.6f, ComboBox.UNITS_EM);
@@ -184,8 +203,13 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 			uploadCGFile.setVisible(true);
 
 		}
-
-		ComboBox cmbpointstopolicy = new ComboBox("Points To Policy");
+       cmbstub.setNullSelectionAllowed(false);
+		
+       cmbstub.addItem("JRE_14");
+       cmbstub.addItem("JRE_15");
+       cmbstub.addItem("NO_STUBS");       
+       cmbstub.setValue("NO_STUBS");
+		
 		cmbpointstopolicy.setNullSelectionAllowed(false);
 		
 		cmbpointstopolicy.addItem("RTA");
@@ -201,15 +225,15 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 
 		TextField txtfldpath = new TextField("Class Path");
 		TextField txtfldthirdpartylib = new TextField("Third Party Library");
+		
 
 		Button btnnext = new Button("Next");
 		Button btnprev = new Button("Prev");
-		// Button btnload = new Button("Instrument");
+		
 		Button btnsave = new Button("Save Configuration");
 		Button btnrun = new Button("Run Analysis");
 		Button btnselectsnsFile = new Button("Select sns File");
-		//Button btnSave = new Button("Save Configuration");
-		//Button btnRun = new Button("Run Analysis");
+		
 		
 		MenuBar barmenu = new MenuBar();
 
@@ -249,9 +273,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		vlayoutmenu.addComponent(btnruntime);
 		vlayoutmenu.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
 		vlayoutmenu.setSpacing(false);
-		// vlayoutmenu.setExpandRatio(btnstatic, );
-		// vlayoutmenu.addComponent();
-		// hlayoutmenu.addComponent(btnnext);
+		
 		HorizontalLayout hlayoutcoreinside = new HorizontalLayout();
 		gridclasspath = new Table("ClassPath");
 		gridclasspath.addContainerProperty("Classpath", TextField.class, null);
@@ -312,15 +334,17 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		
 		fl.addComponent(txtfldname);
 		fl.addComponent(cmbmode);
-		//fl.addComponent(txtfldpath);
-		fl.addComponent(gridclasspath);
-		//fl.addComponent(txtfldthirdpartylib);
+		fl.addComponent(cmbstub);
+		fl.addComponent(txtfldEntryPoint);
+		fl.addComponent(gridclasspath);		
 		fl.addComponent(tblthirdpartylib);
 		fl.addComponent(txtSDGFile);
 		fl.addComponent(uploadSDGFile);
 		fl.addComponent(txtCGFile);
 		fl.addComponent(uploadCGFile);
+		
 		fl.addComponent(txtReportFile);
+		fl.addComponent(uploadReportFile);
 		fl.addComponent(cmbpointstopolicy);
 		fl.addComponent(txtpointtofallback);
 		
@@ -330,18 +354,17 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		HorizontalLayout.addComponent(txterror);
 		txterror.setVisible(false);
 		fl.addComponent(HorizontalLayout);
-		//fl.addComponent(tblpointstoexclude);
 		
-		//fl.addComponent(btnsubwindow);
-		//fl.addComponent(btnselectsnsFile);
 		
 		fl.addComponent(tblsourcensinks);
+		fl.addComponent(txtfldSnSFile);
 		fl.addComponent(uploadSnSfile);
 		//fl.addComponent(txterror);
 		fl.addComponent(chkmultithreaded);
 		fl.addComponent(chksensitiveness);
 		fl.addComponent(chkindirectflows);
 		fl.addComponent(chkcomputechops);
+		fl.addComponent(chkSystemOut);
 		fl.addComponent(btnsave);
 		fl.addComponent(btnrun);
 		
@@ -369,7 +392,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		hlayoutcore.addComponent(vlayoutmenu);
 		hlayoutcore.addComponent(pnltables);
 		Button buttonnam = new Button(buttonname);
-		addComponent(buttonnam);
+		//addComponent(buttonnam);
 		
 
 		//
@@ -402,7 +425,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		btnsave.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				 
-				saveConfigurationxml("Static Analysis");
+				saveConfigurationxml("StaticAnalysis");
 
 				
 				
@@ -439,7 +462,8 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 
 		btnrun.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
-				//saveConfigurationxml(filename);
+				analyser=new StaticAnalyser();
+				analyser.analyseFile(Staticanalysispath +"/"+txtfldname.getValue()+ "/" + "Static Analysis"  + ".xml");
 			}
 		});
 		//open new subwindow for tblsubclasses
@@ -675,9 +699,9 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 		gridclasspath.addActionHandler(new Action.Handler() {
 			public Action[] getActions(Object target, Object sender) {
 				final Action ACTION_NEW = new Action("New");
-				final Action ACTION_EDIT = new Action("Edit");
+				//final Action ACTION_EDIT = new Action("Edit");
 				final Action ACTION_DELETE = new Action("Delete");
-				final Action[] ACTIONS = new Action[] { ACTION_NEW, ACTION_EDIT, ACTION_DELETE };
+				final Action[] ACTIONS = new Action[] { ACTION_NEW,ACTION_DELETE };
 				return ACTIONS;
 
 			}
@@ -700,7 +724,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					addComponent(buttonnam);
 
 					buttonnam.setClickShortcut(KeyCode.ENTER);
-					buttonnam.addClickListener(new Button.ClickListener() {
+					/*buttonnam.addClickListener(new Button.ClickListener() {
 						@Override
 						public void buttonClick(ClickEvent event) {
 							gridclasspath.addItem(new Object[] { txt }, newItemId);
@@ -715,7 +739,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 							removeComponent(buttonnam);
 
 						}
-					});
+					});*/
 
 				} else if (action.getCaption() == "Delete") {
 					/*
@@ -841,7 +865,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					row.getItemProperty("Points To Include").setValue(txt);
 
 					tblpointstoinclude.addItem(new Object[] { txt }, newItemId);
-					Button buttonnam = new Button(buttonname);
+					/*Button buttonnam = new Button(buttonname);
 					addComponent(buttonnam);
 
 					buttonnam.setClickShortcut(KeyCode.ENTER);
@@ -858,7 +882,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 							removeComponent(buttonnam);
 
 						}
-					});
+					});*/
 
 				} else if (action.getCaption() == "Delete") {
 					/*
@@ -905,7 +929,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					row.getItemProperty("Points To Exclude").setValue(txt);
 
 					tblpointstoexclude.addItem(new Object[] { txt }, newItemId);
-					Button buttonnam = new Button(buttonname);
+					/*Button buttonnam = new Button(buttonname);
 					addComponent(buttonnam);
 
 					buttonnam.setClickShortcut(KeyCode.ENTER);
@@ -922,7 +946,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 							removeComponent(buttonnam);
 
 						}
-					});
+					});*/
 
 				} else if (action.getCaption() == "Delete") {
 					/*
@@ -1015,7 +1039,11 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 	protected void saveConfigurationxml(String Name) 
 	{
 
-		File directory = new File(Staticanalysispath);
+		
+		
+		File directory = new File(Staticanalysispath+"/"+txtfldname.getValue());
+		//temppath=temppath.replace('/',"\");
+		//File directory = new File(temppath+"/"+txtfldname.getValue());
 		String strTableData;
 		List<String> listtabledata;
 		
@@ -1033,7 +1061,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 
 			String date = new SimpleDateFormat("dd-MM-yyyy HH-mm-ss").format(new Date());
 			System.out.println(date);
-			Files.write(Paths.get(Staticanalysispath + "/" + Name + date + ".xml"),"".getBytes());
+			Files.write(Paths.get(Staticanalysispath +"/"+txtfldname.getValue()+ "/" + Name + date + ".xml"),"".getBytes());
 			
 			//code to generate and save static analysis config xml file 
 			 
@@ -1065,22 +1093,26 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					attrvalue.setValue((String)cmbmode.getValue());
 					mode.setAttributeNode(attrvalue);
 			 
-					// classpath elements
-					Element classpath = doc.createElement("classpath");
 					
-					analysis.appendChild(classpath);
-					Attr attrvalueclasspath = doc.createAttribute("value");
 					listtabledata=Readfromcommontable(gridclasspath);
 					strTableData="";
 					for (int i = 0; i<listtabledata.size(); i++) 
-					{  if(i!=0 &&i!=listtabledata.size()-1)
+					{  if(i!=0)
 						strTableData=strTableData+"::"+listtabledata.get(i);
 					else strTableData=strTableData+listtabledata.get(i);
 					}
 					String strClasspath=strTableData;
-					attrvalueclasspath.setValue(strClasspath);
-					classpath.setAttributeNode(attrvalueclasspath);
-			 
+					
+                   Element classpath = doc.createElement("classpath");
+					
+					analysis.appendChild(classpath);
+					
+					Attr attrvaluepath = doc.createAttribute("value");
+					
+					
+					attrvaluepath.setValue(strClasspath);
+					classpath.setAttributeNode(attrvaluepath);
+					//temp
 					// thirdpartylib elements
 					Element thirdPartyLibs = doc.createElement("thirdPartyLibs");
 					
@@ -1090,7 +1122,7 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					listtabledata=Readfromcommontable(tblthirdpartylib);
 					strTableData="";
 					for (int i = 0; i<listtabledata.size(); i++) 
-					{  if(i!=0 &&i!=listtabledata.size()-1)
+					{  if(i!=0 )
 						strTableData=strTableData+"::"+listtabledata.get(i);
 					else strTableData=strTableData+listtabledata.get(i);
 					}
@@ -1104,8 +1136,8 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					analysis.appendChild(stubs);
 					
 					Attr attrvaluestub = doc.createAttribute("value");
-					attrvaluestub.setValue("");
-					classpath.setAttributeNode(attrvaluestub);
+					attrvaluestub.setValue((String)cmbstub.getValue());
+					stubs.setAttributeNode(attrvaluestub);
 					
 					Element entrypoint = doc.createElement("entrypoint");
 
@@ -1113,17 +1145,17 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					analysis.appendChild(entrypoint);
 					
 					Attr attrvalueentry = doc.createAttribute("value");
-					attrvalueentry.setValue("1");
+					attrvalueentry.setValue(txtfldEntryPoint.getValue());
 					entrypoint.setAttributeNode(attrvalueentry);
 					Element pointsto = doc.createElement("points-to");
 					
 					analysis.appendChild(pointsto);
 					Attr attrpolicy = doc.createAttribute("policy");
 					
-					attrpolicy.setValue("1");
+					attrpolicy.setValue((String)cmbpointstopolicy.getValue());
 					pointsto.setAttributeNode(attrpolicy);
 					Attr attrfallback = doc.createAttribute("fallback");
-					attrfallback.setValue("1");
+					attrfallback.setValue(txtpointtofallback.getValue());
 					pointsto.setAttributeNode(attrfallback);
 										//read data from points to include and exclude
 					listtabledata=Readfromcommontable(tblpointstoinclude);
@@ -1157,56 +1189,67 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 					
 					analysis.appendChild(ignoreIndirectFlows);
 					Attr attrignoreindirect = doc.createAttribute("value");
-					attrignoreindirect.setValue("1");
+					attrignoreindirect.setValue(Boolean.toString(chkindirectflows.getValue()));
 					ignoreIndirectFlows.setAttributeNode(attrignoreindirect);
 					
 					Element multithreaded = doc.createElement("multithreaded");
 					
 					analysis.appendChild(multithreaded);
 					Attr attrmultith = doc.createAttribute("value");
-					attrmultith.setValue("1");
+					attrmultith.setValue(Boolean.toString(chkmultithreaded.getValue()));
 					multithreaded.setAttributeNode(attrmultith);
 					
 					Element sdgfile = doc.createElement("sdgfile");
 					
 					analysis.appendChild(sdgfile);
 					Attr attrsdg = doc.createAttribute("value");
-					attrsdg.setValue("1");
+					
 					sdgfile.setAttributeNode(attrsdg);
 					
 					Element cgfile = doc.createElement("cgfile");
 										
 					analysis.appendChild(cgfile);
 					Attr attrcgfile = doc.createAttribute("value");
-					attrcgfile.setValue("1");
+					
 					cgfile.setAttributeNode(attrcgfile);
 					
 					Element reportfile = doc.createElement("reportfile");
 					
 					analysis.appendChild(reportfile);
 					Attr attrreport = doc.createAttribute("value");
-					attrreport.setValue("1");
+					if(cmbmode.getValue()=="load")
+					{
+					attrreport.setValue(txtReportFile.getValue());
+					attrcgfile.setValue(txtCGFile.getValue());
+					attrsdg.setValue(txtSDGFile.getValue());
+					}
+					else if(cmbmode.getValue()=="build")
+					{
+						attrreport.setValue(txtReportFile.getValue());
+						attrcgfile.setValue(txtCGFile.getValue());
+						attrsdg.setValue(txtSDGFile.getValue());	
+					}
 					reportfile.setAttributeNode(attrreport);
 					
 					Element computeChops = doc.createElement("computeChops");
 					
 					analysis.appendChild(computeChops);
 					Attr attrcompute = doc.createAttribute("value");
-					attrcompute.setValue("1");
+					attrcompute.setValue(Boolean.toString(chkcomputechops.getValue()));
 					computeChops.setAttributeNode(attrcompute);
 					
 					Element systemout = doc.createElement("systemout");
 					
 					analysis.appendChild(systemout);
 					Attr attrsystemout = doc.createAttribute("value");
-					attrsystemout.setValue("1");
+					attrsystemout.setValue(Boolean.toString(chkSystemOut.getValue()));
 					systemout.setAttributeNode(attrsystemout);
 					
 					Element objectsensitivenes = doc.createElement("objectsensitivenes");
 					
 					analysis.appendChild(objectsensitivenes);
 					Attr attrsensitive = doc.createAttribute("value");
-					attrsensitive.setValue("1");
+					attrsensitive.setValue(Boolean.toString(chksensitiveness.getValue()));
 					objectsensitivenes.setAttributeNode(attrsensitive);
 					
 					Element sourcesandsinks = doc.createElement("sourcesandsinks");					
@@ -1265,18 +1308,19 @@ public class Main extends VerticalLayout implements  View , Receiver, SucceededL
 
 						}
 					}
-					Element Fileelement = doc.createElement("File");
+					if(txtfldSnSFile.getValue()!=""){
+					Element Fileelement = doc.createElement("file");
 					sourcesandsinks.appendChild(Fileelement);
 					Attr Filevalue = doc.createAttribute("value");
 					Filevalue.setValue(txtfldSnSFile.getValue());
 					Fileelement.setAttributeNode(Filevalue);
-					
+					}
 					
 					// write the content into xml file
 					TransformerFactory transformerFactory = TransformerFactory.newInstance();
 					Transformer transformer = transformerFactory.newTransformer();
 					DOMSource source = new DOMSource(doc);
-					StreamResult result = new StreamResult(new File(Staticanalysispath + "/" + "Static Analysis" + date + ".xml"));
+					StreamResult result = new StreamResult(new File(Staticanalysispath +"/"+txtfldname.getValue()+ "/" + Name  + ".xml"));
 			 
 					
 			 
@@ -1410,15 +1454,28 @@ private List<Map<String, String>> ReadfromSourcenSinkstable(Table tablename)
 	}
 
 	@Override
-	public void uploadSucceeded(SucceededEvent event) {
+	public void uploadSucceeded(SucceededEvent event) 
+	{
 		// TODO Auto-generated method stub
+		if(event.getComponent().getCaption()=="CGFile")		
+			txtCGFile.setValue(Staticanalysispath+"/"+txtfldname.getValue()+"/"+event.getFilename());	
+		else if(event.getComponent().getCaption()=="SDGFile")		
+			txtSDGFile.setValue(Staticanalysispath+"/"+txtfldname.getValue()+"/"+event.getFilename());
+		else if(event.getComponent().getCaption()=="reportFile")		
+			txtReportFile.setValue(Staticanalysispath+"/"+txtfldname.getValue()+"/"+event.getFilename());
+		
+		else if(event.getComponent().getCaption()=="Source and sink File")		
+			txtfldSnSFile.setValue(Staticanalysispath+"/"+txtfldname.getValue()+"/"+event.getFilename());
+			
+			
+		   
 		
 	}
 
 	@Override
 	public OutputStream receiveUpload(String filename, String mimeType) {
 		
-		File directory = new File(Staticanalysispath);
+		File directory = new File(Staticanalysispath+"/"+txtfldname.getValue());
 		if (!directory.exists()) {
 			if (directory.mkdirs()) 
 			{
@@ -1427,7 +1484,7 @@ private List<Map<String, String>> ReadfromSourcenSinkstable(Table tablename)
 			} 
 		}
 		OutputStream fos = null; // Output stream to write to
-		File file = new File(strUploadFilePathCG + filename);
+		File file = new File( Staticanalysispath+"/"+txtfldname.getValue()+"/"+ filename);//strUploadFilePathCG+
 		//file.renameTo(new File(strUploadFilePathCG + filename));
 		
 		try {

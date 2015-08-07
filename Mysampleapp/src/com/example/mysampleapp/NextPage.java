@@ -93,6 +93,7 @@ Connection conn=null;
 			InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 			prop.load(inputStream);
 			String dbpath = prop.getProperty("databasepath");
+			new File("").getAbsolutePath();
 			System.out.println("database path is "+dbpath);
 			// set the properties value
 			prop.setProperty("database", "localhost");
