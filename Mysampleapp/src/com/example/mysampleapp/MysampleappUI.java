@@ -55,10 +55,10 @@ public class MysampleappUI extends UI
 		ServletContext serv= VaadinServlet.getCurrent().getServletContext();
 		String PropertFilePath=serv.getInitParameter("propertyfilePath");
 		
-		navigator.addView("",new Main(this));
-		
-			navigator.addView("NextPage", new NextPage(this));
-		
+		//navigator.addView("",new Main(this));
+		navigator.addView("",new NextPage(this));
+			//navigator.addView("NextPage", new NextPage(this));
+		navigator.addView("Main",new Main(this));
 		navigator.addView("Instrumentation", new Instrumentation(this));
 		navigator.addView("Runtime", new RuntimeAnalysis(this));
 		

@@ -117,7 +117,7 @@ public class Instrumentation extends VerticalLayout implements View
 	{
 		public void buttonClick(ClickEvent event) 
 		{ 
-			mainObj.navigator.navigateTo("NextPage");
+			mainObj.navigator.navigateTo("");
 	       	}
 	});
 	//addComponent(lblwelcome);

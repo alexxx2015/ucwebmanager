@@ -1,6 +1,8 @@
 package com.example.mysampleapp;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.sqlite.JDBC;
 
@@ -51,6 +56,7 @@ import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.MenuBar;
+import com.vaadin.ui.Panel;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.Upload;
 import com.vaadin.ui.Upload.Receiver;
@@ -59,11 +65,15 @@ import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.renderers.ButtonRenderer;
 
 @SuppressWarnings("serial")
-@Theme("mysampleapp")
+@Theme("tests-valo-dark")
 public class NextPage extends VerticalLayout implements View , Receiver, SucceededListener
 {  MysampleappUI mainObj;
 FileInfo fileinfoObj;
 Connection conn=null;
+Properties prop = new Properties();
+String propFileName = "Config.properties";//
+String Staticanalysispath;
+InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
   
 
 
@@ -71,20 +81,66 @@ Connection conn=null;
 	public   NextPage(MysampleappUI objmain) 
 	{ 
 		mainObj=objmain;
+		try {
+			prop.load(inputStream);
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
+		Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
 		//setRows(18);
 		//setColumns(8);
-		setSizeFull();setMargin(true);
+		//setSizeFull();
+		//setMargin(true);
 		addStyleName("backColorGrey");
 		//Label lblwelcome=new Label("Welcome ");
 		Button btnnext=new Button("Next");
 		Button btnprev=new Button("Prev");
 		Button btnupload=new Button("upload");
+		Panel pnlgrid=new Panel();
+		
+		
+		
+		Panel pnlupload=new Panel();
+		
+		
+		
 		
 		btnnext.setStyleName("v-button");
 		btnprev.setStyleName("v-button");
-		 List<List<String>> Files = new ArrayList<List<String>>();
-		 
-		 
+		List<List<String>> Files = new ArrayList<List<String>>();
+		HorizontalLayout horiprevnext=new HorizontalLayout();
+		horiprevnext.addComponent(btnprev);
+		horiprevnext.addComponent(btnnext); 
+		HorizontalLayout horicore=new HorizontalLayout();
+		VerticalLayout verticalbuttons=new VerticalLayout();
+		Button btnruntime = new Button("RunTime Analysis");
+		btnruntime.setSizeFull();
+		Button btnstatic = new Button("Static Analysis");
+		btnstatic.setSizeFull();
+
+		Button btninstrument = new Button("Instrumentation");
+		btninstrument.setSizeFull();
+		btnstatic.addStyleName("big");
+		btnruntime.addStyleName("big");
+		//btnruntime.setStyleName("borderless");
+		btninstrument.addStyleName("big");
+
+		//setMargin(true);
+		verticalbuttons.addComponent(btnstatic);
+		verticalbuttons.addComponent(btninstrument);
+		verticalbuttons.addComponent(btnruntime);
+		verticalbuttons.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
+		verticalbuttons.setSpacing(false);
+		verticalbuttons.setSizeFull();
+		verticalbuttons.setMargin(true);
+
+		VerticalLayout verticalcore=new VerticalLayout();
+		Upload uploadFile = new Upload("Upload",this);
+		Grid gridmain=new Grid();
+		
+		
 		try
 		{   Properties prop = new Properties();
 			
@@ -113,7 +169,7 @@ Connection conn=null;
 		 statement.setQueryTimeout(30);  // set timeout to 30 sec.	
 		 
 		 //statement.executeUpdate("insert into Staticanalysis values('program5',DateTime('now'), 'Not Yet Started')");		
-		  rs = statement.executeQuery("select * from Staticanalysis");	
+		  rs = statement.executeQuery("select * from Staticanalysis ");	
 		}
 		else
 			System.out.println("could not create connection to database "+connectionstring);
@@ -198,7 +254,7 @@ Connection conn=null;
  		 IndexedContainer containerFiles =  new IndexedContainer(Files);
  		
 
-		Grid gridmain=new Grid();
+		//Grid gridmain=new Grid();
 		//gridmain.setContainerDataSource(containerFiles);
 		System.out.println("set datasource");
 		List<Grid.Column> listcolumns=gridmain.getColumns();
@@ -206,6 +262,7 @@ Connection conn=null;
 		gridmain.setLocale(Locale.GERMANY);
 		gridmain.setEditorEnabled(true);
 		gridmain.setSizeFull();
+		gridmain.setWidth(50.0f, ComboBox.UNITS_EM);
 		
 		List<String> listaction=new ArrayList<String>();
 		listaction.add("Static Analysis");
@@ -218,7 +275,7 @@ Connection conn=null;
 		gridmain.addColumn("Proceed", String.class);
 		gridmain.addColumn("Time", String.class);
 		//FileUploader receiver = new ImageUploader(); 
-		Upload uploadFile = new Upload("Upload",this);
+		
 		uploadFile.addSucceededListener(this);	
 		Table tble=new Table();
 		//upload.addSucceededListener(receiver);
@@ -252,7 +309,7 @@ Connection conn=null;
 				  case "Static Analysis":
 					  System.out.println(value+ "Yeah");
 					  
-					  mainObj.navigator.navigateTo("/"+filename); 
+					  mainObj.navigator.navigateTo("Main/"+filename); 
 				        break;
 				  case "Instrumentation": 
 					  System.out.println(value+ "Yeah");
@@ -288,19 +345,19 @@ Connection conn=null;
 				
 		
 		//addComponent(lblwelcome,1,0,2,0);
-		MenuBar barmenu = new MenuBar();
+		/*MenuBar barmenu = new MenuBar();
 		
 		@SuppressWarnings("deprecation")
 		MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
 		MenuBar.MenuItem menura = barmenu.addItem("runtime Analysis", null, null);
 		MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
 		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
-
+*/
 		
 		
-		setMargin(true);
+		//setMargin(true);
 		//
-		HorizontalLayout hlayoutmenu=new  HorizontalLayout();
+		/*HorizontalLayout hlayoutmenu=new  HorizontalLayout();
 		hlayoutmenu.setSpacing(true);
 		hlayoutmenu.addComponent(btnprev);		
 		hlayoutmenu.addComponent(barmenu);
@@ -309,14 +366,31 @@ Connection conn=null;
 		hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
 		hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
 		hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
-		addComponent(hlayoutmenu);
+		addComponent(hlayoutmenu);*/
 		//addComponent(btnnext);
 		//addComponent(btnprev);
-		addComponent(gridmain);
-		setComponentAlignment(gridmain, Alignment.MIDDLE_CENTER);
-		addComponent(uploadFile);
-		setComponentAlignment(uploadFile, Alignment.BOTTOM_LEFT);
-		//addComponent(btnupload,0,7,2,7);
+		//pnlgrid.setContent(gridmain);
+		//pnlupload.setContent(uploadFile);
+		//pnlgrid.getContent().setSizeUndefined();
+		//pnlupload.getContent().setSizeUndefined();
+		//pnlgrid.setScrollLeft(6);
+		//pnlupload.setScrollLeft(6);
+		verticalcore.addComponent(uploadFile);
+		
+		verticalcore.addComponent(gridmain);
+		
+		verticalcore.setSizeUndefined();
+		
+		verticalcore.setSizeFull();
+		horicore.addComponent(verticalbuttons);
+		horicore.addComponent(verticalcore);
+		addComponent(horiprevnext);
+		//setComponentAlignment(gridmain, Alignment.MIDDLE_CENTER);
+		addComponent(horicore);
+		this.setSpacing(true);
+		
+		//setComponentAlignment(uploadFile, Alignment.BOTTOM_LEFT);
+		
 		
 		btnupload.addClickListener(new Button.ClickListener() 
 		{
@@ -339,7 +413,43 @@ Connection conn=null;
 				
 		       	}
 		});
+		btnnext.addClickListener(new Button.ClickListener() 
+		{
+			public void buttonClick(ClickEvent event) 
+			{ 
 				
+	            mainObj.navigator.navigateTo("Main");
+
+				
+		       	}
+		});	
+		btninstrument.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Instrumentation");
+
+				
+			}
+		});
+		btnstatic.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Main");
+
+				
+			}
+		});
+		btnruntime.addClickListener(new Button.ClickListener() {
+			public void buttonClick(ClickEvent event) {
+				
+
+				mainObj.navigator.navigateTo("Runtime");
+
+				
+			}
+		});
 		
 	
 		
@@ -400,28 +510,53 @@ Connection conn=null;
 
 
 }    @Override
-	 public OutputStream receiveUpload(String filename, String MIMEType) {
-	FileOutputStream fos = null; // Output stream to write to
-File file = new File("UploadFilePath" + filename);
-try {
-// Open the file for writing.
-fos = new FileOutputStream(file);
-} 
-catch (final java.io.FileNotFoundException e) 
+	 public OutputStream receiveUpload(String filename, String MIMEType) 
 {
-// Error while opening the file. Not reported here.
-e.printStackTrace();
-return null;
-}
+	File directory = new File(Staticanalysispath+"/apps"+"/"+filename+"/Source");
+	if (!directory.exists()) {
+		if (directory.mkdirs()) 
+		{
+			System.out.println("Directory is created!");
 
-return fos; // Return the output stream to write to
+		} 
+	}
+	OutputStream fos = null; // Output stream to write to
+	File file = new File(Staticanalysispath+"/apps"+"/"+filename+"/Source/"+filename);//strUploadFilePathCG+
+	
+	
+	try {
+	// Open the file for writing.
+	fos = new FileOutputStream(file);
+	
+	} 
+	catch (final java.io.FileNotFoundException e) 
+	{
+	// Error while opening the file. Not reported here.
+	e.printStackTrace();
+	return null;
+	}
+
+	return fos; // Return the output stream to write to
 }    @Override
 	 public void uploadSucceeded(Upload.SucceededEvent event)
 	 {
-	 Statement statement;
+	//unzip(Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles/"+event.getFilename(),Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles");
+	unZipIt(Staticanalysispath+"/apps"+"/"+event.getFilename()+"/Source/"+event.getFilename(),Staticanalysispath+"/apps"+"/"+event.getFilename()+"/Source");
 	try {
-		statement = conn.createStatement();
-		statement.executeUpdate("insert into Staticanalysis values('"+event.getFilename()+"',DateTime('now'), 'Not Yet Started')");
+	Statement statement;
+	statement = conn.createStatement();
+		int count;
+		ResultSet rs =statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+event.getFilename()+"'"); 
+		count=rs.getInt("rowcount1");
+		if(count==0)
+			statement.executeUpdate("insert into Staticanalysis values('"+event.getFilename()+"',DateTime('now'), 'Not Yet Started')");
+		else if(count==1)
+			statement.executeUpdate("UPDATE Staticanalysis SET status ='Not Yet Started' WHERE Name='"+event.getFilename()+"'");
+		
+		
+		
+		
+		statement.close();
 	} catch (SQLException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -431,9 +566,100 @@ return fos; // Return the output stream to write to
 	    }
 
 	    // This is called if the upload fails.
-	    public void uploadFailed(Upload.FailedEvent event) 
+	public void uploadFailed(Upload.FailedEvent event) 
 	    {
 	        // Log the failure on screen.
 	       
 	    }
+	public void unzip(String zipFilePath, String destDirectory) throws IOException {
+        File destDir = new File(destDirectory);
+        if (!destDir.exists()) {
+            destDir.mkdir();
+        }
+        ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
+        ZipEntry entry = zipIn.getNextEntry();
+        // iterates over entries in the zip file
+        while (entry != null) {
+            String filePath = destDirectory + File.separator + entry.getName();
+            if (!entry.isDirectory()) {
+                // if the entry is a file, extracts it
+                extractFile(zipIn, filePath);
+            } else {
+                // if the entry is a directory, make the directory
+                File dir = new File(filePath);
+                dir.mkdir();
+            }
+            zipIn.closeEntry();
+            entry = zipIn.getNextEntry();
+        }
+        zipIn.close();
+    }
+	  private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
+		 
+		  File file = new File(filePath);
+		  BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+	        byte[] bytesIn = new byte[4096];
+	        int read = 0;
+	        while ((read = zipIn.read(bytesIn)) != -1) {
+	            bos.write(bytesIn, 0, read);
+	        }
+	        bos.close();
+	    }
+	  public void unZipIt(String zipFile, String outputFolder){
+
+		     byte[] buffer = new byte[1024];
+		    	
+		     try{
+		    		
+		    	//create output directory is not exists
+		    	File folder = new File(outputFolder);
+		    	if(!folder.exists()){
+		    		folder.mkdir();
+		    	}
+		    		
+		    	//get the zip file content
+		    	ZipInputStream zis = 
+		    		new ZipInputStream(new FileInputStream(zipFile));
+		    	//get the zipped file list entry
+		    	ZipEntry ze = zis.getNextEntry();
+		    		
+		    	while(ze!=null){
+		    		  
+		    	   String fileName = ze.getName();
+		           File newFile = new File(outputFolder + File.separator + fileName);
+		                
+		           System.out.println("file unzip : "+ newFile.getAbsoluteFile());
+		           if (ze.isDirectory()) {
+		                 
+		             
+		                  File dir = new File(outputFolder + File.separator + fileName);
+		                  dir.mkdir();
+		                  new File(newFile.getParent()).mkdirs();
+		                  ze = zis.getNextEntry();
+		                  continue;
+		             }
+		           
+		            new File(newFile.getParent()).mkdirs();
+		              
+		            FileOutputStream fos = new FileOutputStream(newFile);             
+
+		            int len;
+		            while ((len = zis.read(buffer)) > 0) {
+		       		fos.write(buffer, 0, len);
+		            }
+		        		
+		            fos.close();   
+		            ze = zis.getNextEntry();
+		    	}
+		    	
+		        zis.closeEntry();
+		    	zis.close();
+		    		
+		    	System.out.println("Done");
+		    		
+		    }catch(IOException ex){
+		       ex.printStackTrace(); 
+		    }
+		   } 
+
 }

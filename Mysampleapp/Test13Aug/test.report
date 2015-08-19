@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<mapping analysistime="5194">
+  <sources>
+    <source>
+      <id>Source0</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:29</location>
+      <possible-signatures>
+        <signature>java.io.FileInputStream.read()I</signature>
+      </possible-signatures>
+      <return/>
+      <context/>
+    </source>
+    <source>
+      <id>Source1</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:36</location>
+      <possible-signatures>
+        <signature>java.io.FileInputStream.read([B)I</signature>
+      </possible-signatures>
+      <param index="1"/>
+      <context/>
+    </source>
+  </sources>
+  <sinks>
+    <sink>
+      <id>Sink0</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:6</location>
+      <possible-signatures>
+        <signature>java.io.FileInputStream.&lt;init&gt;(Ljava/lang/String;)V</signature>
+      </possible-signatures>
+      <param index="0"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink1</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:6</location>
+      <possible-signatures>
+        <signature>java.io.FileInputStream.&lt;init&gt;(Ljava/lang/String;)V</signature>
+      </possible-signatures>
+      <param index="1"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink2</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:16</location>
+      <possible-signatures>
+        <signature>java.io.FileOutputStream.&lt;init&gt;(Ljava/lang/String;)V</signature>
+      </possible-signatures>
+      <param index="0"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink3</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:16</location>
+      <possible-signatures>
+        <signature>java.io.FileOutputStream.&lt;init&gt;(Ljava/lang/String;)V</signature>
+      </possible-signatures>
+      <param index="1"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink4</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:42</location>
+      <possible-signatures>
+        <signature>java.io.FileOutputStream.write([B)V</signature>
+      </possible-signatures>
+      <param index="1"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink5</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:50</location>
+      <possible-signatures>
+        <signature>java.io.PrintStream.println(I)V</signature>
+      </possible-signatures>
+      <param index="0"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink6</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:50</location>
+      <possible-signatures>
+        <signature>java.io.PrintStream.println(I)V</signature>
+      </possible-signatures>
+      <param index="1"/>
+      <context/>
+    </sink>
+    <sink>
+      <id>Sink7</id>
+      <location>test.TestProgram.main([Ljava/lang/String;)V:66</location>
+      <possible-signatures>
+        <signature>java.lang.Throwable.printStackTrace()V</signature>
+      </possible-signatures>
+      <param index="0"/>
+      <context/>
+    </sink>
+  </sinks>
+  <creation-sites/>
+  <flows>
+    <sink id="Sink0"/>
+    <sink id="Sink1"/>
+    <sink id="Sink2"/>
+    <sink id="Sink3"/>
+    <sink id="Sink4">
+      <source id="Source1"/>
+    </sink>
+    <sink id="Sink5"/>
+    <sink id="Sink6">
+      <source id="Source0"/>
+    </sink>
+    <sink id="Sink7"/>
+  </flows>
+</mapping>
