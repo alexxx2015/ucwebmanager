@@ -46,6 +46,7 @@ import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.server.Page;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Alignment;
@@ -74,6 +75,7 @@ Properties prop = new Properties();
 String propFileName = "Config.properties";//
 String Staticanalysispath;
 InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+String isRefresh="";
   
 
 
@@ -81,6 +83,8 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 	public   NextPage(MysampleappUI objmain) 
 	{ 
 		mainObj=objmain;
+		String isRefreshh=isRefresh;
+		
 		try {
 			prop.load(inputStream);
 		} catch (IOException e2) {
@@ -451,10 +455,11 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 			}
 		});
 		
-	
 		
 		
 		
+	if(isRefreshh=="Refresh")Page.getCurrent().reload();
+	isRefreshh="";
 	}
    public Field<?> getComboBox(String requiredErrorMsg, List<String> items) {
 
@@ -477,6 +482,17 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 	public void enter(ViewChangeEvent event)
 	{
 		// TODO Auto-generated method stub
+		if (event.getParameters() != null) {
+			// split at "/", add each part as a label
+			String[] msgs = event.getParameters().split("/");
+			for (String msg : msgs) {
+				isRefresh = msg;
+				//System.out.println("enter view changeevent " + appname);
+			}
+			Page.getCurrent().getWindowName();
+
+			
+		}
 		
 	}
 	private void selectdatafromdb()
@@ -512,7 +528,7 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 }    @Override
 	 public OutputStream receiveUpload(String filename, String MIMEType) 
 {
-	File directory = new File(Staticanalysispath+"/apps"+"/"+filename+"/Source");
+	File directory = new File(Staticanalysispath+"/apps/ws-flowAnaluser"+"/"+filename+"/Source");
 	if (!directory.exists()) {
 		if (directory.mkdirs()) 
 		{
@@ -521,7 +537,7 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 		} 
 	}
 	OutputStream fos = null; // Output stream to write to
-	File file = new File(Staticanalysispath+"/apps"+"/"+filename+"/Source/"+filename);//strUploadFilePathCG+
+	File file = new File(Staticanalysispath+"/apps/ws-flowAnaluser"+"/"+filename+"/Source/"+filename);//strUploadFilePathCG+
 	
 	
 	try {
@@ -541,7 +557,7 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 	 public void uploadSucceeded(Upload.SucceededEvent event)
 	 {
 	//unzip(Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles/"+event.getFilename(),Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles");
-	unZipIt(Staticanalysispath+"/apps"+"/"+event.getFilename()+"/Source/"+event.getFilename(),Staticanalysispath+"/apps"+"/"+event.getFilename()+"/Source");
+	unZipIt(Staticanalysispath+"/apps"+"/"+event.getFilename()+"/Source/"+event.getFilename(),Staticanalysispath+"/apps/ws-flowAnaluser"+"/"+event.getFilename()+"/Source");
 	try {
 	Statement statement;
 	statement = conn.createStatement();
@@ -557,6 +573,7 @@ InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFi
 		
 		
 		statement.close();
+		Page.getCurrent().reload();
 	} catch (SQLException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();

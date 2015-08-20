@@ -457,12 +457,55 @@ public class Main extends VerticalLayout implements View, Receiver,
 		btnrun.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				analyser = new StaticAnalyser();
+				saveConfigurationxml("StaticAnalysis");
+				if(new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
+						+ appname + "/" + txtfldname.getValue()).exists())
+				{
+					Window msgbox = new Window("MessageBox");
+					// msgbox.addStyleName("Messageboxdesign");
 
-				analyser.analyseFile(Staticanalysispath + "/apps" + "/"
+					FormLayout subContent = new FormLayout();
+					Button btnYes=new Button("Yes");
+					Button btnNo=new Button("No");
+					Label lblmessage = new Label("A Static analysis has already started and finished with the same name. Do you want to overwrite it?");
+					lblmessage.addStyleName("Messageboxdesign");
+					subContent.setMargin(true);
+					subContent.addComponent(lblmessage);
+					subContent.addComponent(btnYes);
+					subContent.addComponent(btnNo);
+					msgbox.setModal(true);
+					msgbox.setSizeUndefined();
+					msgbox.setContent(subContent);
+					btnYes.addClickListener(new Button.ClickListener()
+					{
+						public void buttonClick(ClickEvent event)
+						{
+							
+							analyser.analyseFile(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
+									+ appname + "/" + txtfldname.getValue(),
+									Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname + "/"
+											+ txtfldname.getValue() + "/"
+											+ "StaticAnalysis" + ".xml",appname,mainObj);	
+							msgbox.close();
+							mainObj.navigator.navigateTo("/Refresh");
+						}
+					});
+					btnNo.addClickListener(new Button.ClickListener()
+					{
+						public void buttonClick(ClickEvent event)
+						{
+							
+							msgbox.close();
+						}
+					});
+					UI.getCurrent().addWindow(msgbox);	
+				}
+				/*analyser.analyseFile(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
 						+ appname + "/" + txtfldname.getValue(),
-						Staticanalysispath + "/apps" + "/" + appname + "/"
+						Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname + "/"
 								+ txtfldname.getValue() + "/"
-								+ "StaticAnalysis" + ".xml");
+								+ "StaticAnalysis" + ".xml",appname,mainObj);*/
+				
 			}
 		});
 		// open new subwindow for tblsubclasses
@@ -1043,7 +1086,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 
 	protected void saveConfigurationxml(String Name) {
 
-		File directory = new File(Staticanalysispath + "/apps" + "/" + appname
+		File directory = new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
 				+ "/" + txtfldname.getValue());
 		// temppath=temppath.replace('/',"\");
 		// File directory = new File(temppath+"/"+txtfldname.getValue());
@@ -1089,7 +1132,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 
 			// set attribute to staff element
 			Attr attrname = doc.createAttribute("name");
-			attrname.setValue("/apps" + "/" + appname + "/"
+			attrname.setValue("/apps/ws-flowAnaluser" + "/" + appname + "/"
 					+ txtfldname.getValue());
 			analysis.setAttributeNode(attrname);
 
@@ -1112,10 +1155,10 @@ public class Main extends VerticalLayout implements View, Receiver,
 			}
 			String strClasspath = strTableData;
 			if (strClasspath == "")
-				applicationname = Staticanalysispath + "/apps" + "/" + appname
+				applicationname = Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
 						+ "/" + "Source";
 			else
-				applicationname = Staticanalysispath + "/apps" + "/" + appname
+				applicationname = Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
 						+ "/" + "Source" + "/" + strClasspath;
 
 			Element classpath = doc.createElement("classpath");
@@ -1343,7 +1386,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
 			StreamResult result = new StreamResult(new File(Staticanalysispath
-					+ "/apps" + "/" + appname + "/" + txtfldname.getValue()
+					+ "/apps/ws-flowAnaluser" + "/" + appname + "/" + txtfldname.getValue()
 					+ "/" + Name + ".xml"));
 
 			transformer.transform(source, result);
@@ -1481,7 +1524,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 					+ txtfldname.getValue() + "/" + event.getFilename());
 
 		else if (event.getComponent().getCaption() == "Source and sink File")
-			txtfldSnSFile.setValue(Staticanalysispath + "/"
+			txtfldSnSFile.setValue(Staticanalysispath +"/apps/ws-flowAnaluser/"+appname+"/"
 					+ txtfldname.getValue() + "/" + event.getFilename());
 
 	}
@@ -1489,7 +1532,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 	@Override
 	public OutputStream receiveUpload(String filename, String mimeType) {
 
-		File directory = new File(Staticanalysispath + "/apps" + "/" + appname);
+		File directory = new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname+"/"+txtfldname.getValue());
 
 		if (!directory.exists()) {
 			if (directory.mkdirs()) {
@@ -1498,7 +1541,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			}
 		}
 		OutputStream fos = null; // Output stream to write to
-		File file = new File(Staticanalysispath + "/apps" + "/" + appname + "/"
+		File file = new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname + "/"+txtfldname.getValue()+"/"
 				+ filename);// strUploadFilePathCG+
 		// file.renameTo(new File(strUploadFilePathCG + filename));
 

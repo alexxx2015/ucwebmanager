@@ -14,14 +14,17 @@ import java.util.Properties;
 public class StaticAnalyser {
 	String Projectlocation=new File("").getAbsolutePath();
 	Connection conn=null;
+	MysampleappUI mainObj;
 
 
-	public void  analyseFile(String Applicationname,String fileName)
+	public void  analyseFile(String Applicationname,String fileName,String DbFileName,MysampleappUI mainobj)
 	{
 		try {
+			mainObj=mainobj;
 		Projectlocation=Projectlocation.replace('\\','/');
 		String xmllocation=Projectlocation;
 		 Properties prop = new Properties();
+		
 			
 			String propFileName = "Config.properties";
 			 
@@ -46,12 +49,12 @@ public class StaticAnalyser {
 //					try {
 						
 						int count;
-						ResultSet rs =statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+fileName+"'"); 
+						ResultSet rs =statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'"); 
 						count=rs.getInt("rowcount1");
 						if(count==0)
-						statement.executeUpdate("insert into Staticanalysis values('"+fileName+"',DateTime('now'), 'Static Analysis Started')");
+						statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Started')");
 						else if(count==1)
-							statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Started' WHERE Name='"+fileName+"'");
+							statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Started' WHERE Name='"+DbFileName+"'");
 						statement.close();
 					/*} catch (SQLException e) {
 						// TODO Auto-generated catch block
@@ -74,12 +77,12 @@ public class StaticAnalyser {
 							//statement = conn.createStatement();
 //							try {
 								// count;
-								 rs=statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+fileName+"'"); 
+								 rs=statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'"); 
 								count=rs.getInt("rowcount1");
 								if(count==0)
-									statement.executeUpdate("insert into Staticanalysis values('"+fileName+"',DateTime('now'), 'Static Analysis Done')");
+									statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Done')");
 								else if(count==1)
-									statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Done' WHERE Name='"+fileName+"'");
+									statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Done' WHERE Name='"+DbFileName+"'");
 								statement.close();
 							/*} catch (SQLException e) {
 								// TODO Auto-generated catch block
@@ -87,24 +90,20 @@ public class StaticAnalyser {
 							} 
 							*/
 							statement.close();
-						/*} catch (SQLException e) {
-							
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}  */
+							// mainObj.navigator.navigateTo(""); 
 					}
 					else if(status==1)
 					{
 						//try {
 							// count;
-							 rs=statement.executeQuery("SELECT count(*)  AS rowcount1 FROM Staticanalysis WHERE Name='"+fileName+"'");
+							 rs=statement.executeQuery("SELECT count(*)  AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'");
 							count=rs.getInt("rowcount1");
 							if(count==0)
-								statement.executeUpdate("insert into Staticanalysis values('"+fileName+"',DateTime('now'), 'Static Analysis Error')");
+								statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Error')");
 							else if(count==1)
-								statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Error' WHERE Name='"+fileName+"'");
+								statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Error' WHERE Name='"+DbFileName+"'");
 							
-							
+							 
 						/*} catch (SQLException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
