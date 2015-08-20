@@ -68,7 +68,7 @@ import com.vaadin.ui.Window;
 @Theme("tests-valo-dark")
 public class Main extends VerticalLayout implements View, Receiver,
 		SucceededListener {
-	public static final String CONFIG_PROP="propertyFilePath";
+	public static final String CONFIG_PROP="CONFIG_PROP";
 	MysampleappUI mainObj;
 	static String appname, Staticanalysispath, applicationname;
 	static int buttonnum = 0;
