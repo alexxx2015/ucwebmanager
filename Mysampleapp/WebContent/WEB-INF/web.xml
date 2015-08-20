@@ -10,7 +10,7 @@
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <context-param>
-  <param-name>propertyfilePath</param-name>
+  <param-name>propertyFilePath</param-name>
   <param-value>Config.properties</param-value>
   </context-param>
  <!--  <resource-ref>

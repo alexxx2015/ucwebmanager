@@ -53,7 +53,7 @@ public class MysampleappUI extends UI
 	protected void init(VaadinRequest request) 
 	{
 		ServletContext serv= VaadinServlet.getCurrent().getServletContext();
-		String PropertFilePath=serv.getInitParameter("propertyfilePath");
+		String PropertFilePath=serv.getInitParameter(Main.CONFIG_PROP);
 		
 		//navigator.addView("",new Main(this));
 		navigator.addView("",new NextPage(this));

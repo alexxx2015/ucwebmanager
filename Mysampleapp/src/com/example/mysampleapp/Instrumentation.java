@@ -37,7 +37,7 @@ public class Instrumentation extends VerticalLayout implements View
 	  String Instrumentationpath;
 	public   Instrumentation(MysampleappUI objmain) 
 	{   ServletContext serv= VaadinServlet.getCurrent().getServletContext();
-	    String PropertFilePath=serv.getInitParameter("propertyfilePath");
+	    String PropertFilePath=serv.getInitParameter(Main.CONFIG_PROP);
 	    
 		mainObj=objmain;
 		System.out.println("instrumentation reached");	

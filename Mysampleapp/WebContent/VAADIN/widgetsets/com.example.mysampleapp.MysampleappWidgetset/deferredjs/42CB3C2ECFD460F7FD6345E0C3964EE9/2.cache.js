@@ -1,1 +1,0 @@
-$wnd.com_example_mysampleapp_MysampleappWidgetset.runAsyncCallback2('eab(1514,1,jJd);_.tc=function m8b(){HWb((!AWb&&(AWb=new MWb),AWb),this.a.d)};QCd(Qh)(2);\n//# sourceURL=com.example.mysampleapp.MysampleappWidgetset-2.js\n')
