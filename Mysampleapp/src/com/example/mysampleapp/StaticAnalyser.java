@@ -12,117 +12,119 @@ import java.sql.Statement;
 import java.util.Properties;
 
 public class StaticAnalyser {
-	String Projectlocation=new File("").getAbsolutePath();
-	Connection conn=null;
+	String Projectlocation = new File("").getAbsolutePath();
+	String databasedriver;
+	Connection conn = null;
 	MysampleappUI mainObj;
 
-
-	public void  analyseFile(String Applicationname,String fileName,String DbFileName,MysampleappUI mainobj)
-	{
+	public void analyseFile(String Applicationname, String fileName, String DbFileName, MysampleappUI mainobj) {
 		try {
-			mainObj=mainobj;
-		Projectlocation=Projectlocation.replace('\\','/');
-		String xmllocation=Projectlocation;
-		 Properties prop = new Properties();
-		
+			mainObj = mainobj;
+			Projectlocation = Projectlocation.replace('\\', '/');
 			
+			String xmllocation = Projectlocation;
+			Properties prop = new Properties();
+
 			String propFileName = "Config.properties";
-			 
+
 			InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 			prop.load(inputStream);
-		String dbpath = prop.getProperty("databasepath");
-		String connectionstring="jdbc:sqlite:"+dbpath;
-		 DatabaseConnection db=new DatabaseConnection();
-		 conn=db.Createconnection(connectionstring);
-		 Statement statement = conn.createStatement();
-			
-	
-		//Run the child process in a new thread
-		 Thread thread = new Thread()
-		 {
-			    public void run()
-			    {
-			    	try 
-			    	{
-			    	ProcessBuilder pb = new ProcessBuilder("java", "-jar", xmllocation+"/flowanalyzer.jar", fileName);
-					Process p = pb.start();
-//					try {
-						
-						int count;
-						ResultSet rs =statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'"); 
-						count=rs.getInt("rowcount1");
-						if(count==0)
-						statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Started')");
-						else if(count==1)
-							statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Started' WHERE Name='"+DbFileName+"'");
-						statement.close();
-					/*} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} */ 
-					  
-					 
-					
-					BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-					String s = "";
-					while((s = in.readLine()) != null)
-					{
-						System.out.println(s);
-					}
-					int status = p.waitFor();
-					
-					if(status==0)
-					{
-//						try {
-							//statement = conn.createStatement();
-//							try {
-								// count;
-								 rs=statement.executeQuery("SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'"); 
-								count=rs.getInt("rowcount1");
-								if(count==0)
-									statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Done')");
-								else if(count==1)
-									statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Done' WHERE Name='"+DbFileName+"'");
-								statement.close();
-							/*} catch (SQLException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} 
-							*/
-							statement.close();
-							// mainObj.navigator.navigateTo(""); 
-					}
-					else if(status==1)
-					{
-						//try {
-							// count;
-							 rs=statement.executeQuery("SELECT count(*)  AS rowcount1 FROM Staticanalysis WHERE Name='"+DbFileName+"'");
-							count=rs.getInt("rowcount1");
-							if(count==0)
-								statement.executeUpdate("insert into Staticanalysis values('"+DbFileName+"',DateTime('now'), 'Static Analysis Error')");
-							else if(count==1)
-								statement.executeUpdate("UPDATE Staticanalysis SET status ='Static analysis Error' WHERE Name='"+DbFileName+"'");
-							
-							 
-						/*} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}  */
-					}
-					//child process ends
-						
-					System.out.println("Exited status: " + status);  
-			    }
-			    
-			    catch(Exception ex)
-			    {
-			    	
-			    }
-			    }
-		};
+			String dbpath = Projectlocation + prop.getProperty("databasepath");
+			databasedriver=prop.getProperty("databasedriver");
+			String connectionstring = databasedriver + dbpath;
+			DatabaseConnection db = new DatabaseConnection();
+			conn = db.Createconnection(connectionstring);
+			Statement statement = conn.createStatement();
 
-			  thread.start();
-		
+			// Run the child process in a new thread
+			Thread thread = new Thread() {
+				public void run() {
+					try {
+						ProcessBuilder pb = new ProcessBuilder("java", "-jar", xmllocation + "/flowanalyzer.jar",
+								fileName);
+						Process p = pb.start();
+
+						int count;
+						ResultSet rs = statement.executeQuery(
+								"SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='" + DbFileName + "'");
+						count = rs.getInt("rowcount1");
+						if (count == 0)
+							statement.executeUpdate("insert into Staticanalysis values('" + DbFileName
+									+ "',DateTime('now'), 'Static Analysis Started')");
+						else if (count == 1)
+							statement.executeUpdate(
+									"UPDATE Staticanalysis SET status ='Static analysis Started' WHERE Name='"
+											+ DbFileName + "'");
+						statement.close();
+						/*
+						 * } catch (SQLException e) { // TODO Auto-generated
+						 * catch block e.printStackTrace(); }
+						 */
+
+						BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+						String s = "";
+						while ((s = in.readLine()) != null) {
+							System.out.println(s);
+						}
+						int status = p.waitFor();
+
+						if (status == 0) {
+							// try {
+							// statement = conn.createStatement();
+							// try {
+							// count;
+							rs = statement.executeQuery(
+									"SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='" + DbFileName + "'");
+							count = rs.getInt("rowcount1");
+							if (count == 0)
+								statement.executeUpdate("insert into Staticanalysis values('" + DbFileName
+										+ "',DateTime('now'), 'Static Analysis Done')");
+							else if (count == 1)
+								statement.executeUpdate(
+										"UPDATE Staticanalysis SET status ='Static analysis Done' WHERE Name='"
+												+ DbFileName + "'");
+							statement.close();
+							/*
+							 * } catch (SQLException e) { // TODO Auto-generated
+							 * catch block e.printStackTrace(); }
+							 */
+							statement.close();
+							mainObj.navigator.navigateTo("/Refresh");
+						} else if (status == 1) {
+							// try {
+							// count;
+							rs = statement.executeQuery("SELECT count(*)  AS rowcount1 FROM Staticanalysis WHERE Name='"
+									+ DbFileName + "'");
+							count = rs.getInt("rowcount1");
+							if (count == 0)
+								statement.executeUpdate("insert into Staticanalysis values('" + DbFileName
+										+ "',DateTime('now'), 'Static Analysis Error')");
+							else if (count == 1)
+								statement.executeUpdate(
+										"UPDATE Staticanalysis SET status ='Static analysis Error' WHERE Name='"
+												+ DbFileName + "'");
+
+							/*
+							 * } catch (SQLException e) { // TODO Auto-generated
+							 * catch block e.printStackTrace(); }
+							 */
+							mainObj.navigator.navigateTo("/Refresh");
+						}
+						// child process ends
+
+						System.out.println("Exited status: " + status);
+					}
+
+					catch (Exception ex) {
+
+					}
+				}
+			};
+
+			thread.start();
+			// thread.getId();
+			// thread.interrupt();
+
 		} catch (IOException | SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -108,7 +108,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 	Label lblsuccessmessageCG, lblsuccessmessageReport, lblsuccessmessageSDG;
 	TextField txtfldEntryPoint = new TextField("Entry Point");
 	StaticAnalyser analyser;
-	String Projectlocation;
+	String relativepath;
 
 	// uploadSDGFile.setButtonCaption("Browse");
 	Upload uploadCGFile = new Upload("CGFile", this);
@@ -130,7 +130,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			String temppath = new File("").getAbsolutePath()
 					+ "/StaticAnalysis";
 			System.out.println("relativepath is  is " + temppath
-					+ " and absolutepath is " + Staticanalysispath);
+					+ " and absolutepath is " + relativepath);
 			prop.setProperty("database", "localhost");
 			prop.setProperty("dbuser", "mkyong");
 			prop.setProperty("dbpassword", "password");
@@ -180,7 +180,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 		txtlogFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		cmbpointstopolicy.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtfldSnSFile.setWidth(24.6f, ComboBox.UNITS_EM);
-		Projectlocation = new File("").getAbsolutePath();
+		relativepath = new File("").getAbsolutePath();
 
 		uploadCGFile.addSucceededListener(this);
 		uploadSDGFile.addSucceededListener(this);
@@ -458,7 +458,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			public void buttonClick(ClickEvent event) {
 				analyser = new StaticAnalyser();
 				saveConfigurationxml("StaticAnalysis");
-				if(new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
+				if(new File(relativepath + "/apps/ws-flowAnaluser" + "/"
 						+ appname + "/" + txtfldname.getValue()).exists())
 				{
 					Window msgbox = new Window("MessageBox");
@@ -481,13 +481,13 @@ public class Main extends VerticalLayout implements View, Receiver,
 						public void buttonClick(ClickEvent event)
 						{
 							
-							analyser.analyseFile(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
+							analyser.analyseFile(relativepath + "/apps/ws-flowAnaluser" + "/"
 									+ appname + "/" + txtfldname.getValue(),
 									Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname + "/"
 											+ txtfldname.getValue() + "/"
 											+ "StaticAnalysis" + ".xml",appname,mainObj);	
 							msgbox.close();
-							mainObj.navigator.navigateTo("/Refresh");
+							//mainObj.navigator.navigateTo("/Refresh");
 						}
 					});
 					btnNo.addClickListener(new Button.ClickListener()
@@ -1086,7 +1086,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 
 	protected void saveConfigurationxml(String Name) {
 
-		File directory = new File(Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
+		File directory = new File(relativepath + "/apps/ws-flowAnaluser" + "/" + appname
 				+ "/" + txtfldname.getValue());
 		// temppath=temppath.replace('/',"\");
 		// File directory = new File(temppath+"/"+txtfldname.getValue());
@@ -1155,10 +1155,10 @@ public class Main extends VerticalLayout implements View, Receiver,
 			}
 			String strClasspath = strTableData;
 			if (strClasspath == "")
-				applicationname = Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
+				applicationname = relativepath + "/apps/ws-flowAnaluser" + "/" + appname
 						+ "/" + "Source";
 			else
-				applicationname = Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname
+				applicationname = relativepath + "/apps/ws-flowAnaluser" + "/" + appname
 						+ "/" + "Source" + "/" + strClasspath;
 
 			Element classpath = doc.createElement("classpath");
@@ -1376,6 +1376,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 				Element Fileelement = doc.createElement("file");
 				sourcesandsinks.appendChild(Fileelement);
 				Attr Filevalue = doc.createAttribute("value");
+				txtfldSnSFile.getValue().replace('\\','/');
 				Filevalue.setValue(txtfldSnSFile.getValue());
 				Fileelement.setAttributeNode(Filevalue);
 			}
@@ -1385,7 +1386,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 					.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new File(Staticanalysispath
+			StreamResult result = new StreamResult(new File(relativepath
 					+ "/apps/ws-flowAnaluser" + "/" + appname + "/" + txtfldname.getValue()
 					+ "/" + Name + ".xml"));
 
@@ -1514,17 +1515,17 @@ public class Main extends VerticalLayout implements View, Receiver,
 	public void uploadSucceeded(SucceededEvent event) {
 		// TODO Auto-generated method stub
 		if (event.getComponent().getCaption() == "CGFile")
-			txtCGFile.setValue(Staticanalysispath + "/" + txtfldname.getValue()
+			txtCGFile.setValue(relativepath + "/" + txtfldname.getValue()
 					+ "/" + event.getFilename());
 		else if (event.getComponent().getCaption() == "SDGFile")
-			txtSDGFile.setValue(Staticanalysispath + "/"
+			txtSDGFile.setValue(relativepath + "/"
 					+ txtfldname.getValue() + "/" + event.getFilename());
 		else if (event.getComponent().getCaption() == "reportFile")
-			txtReportFile.setValue(Staticanalysispath + "/"
+			txtReportFile.setValue(relativepath + "/"
 					+ txtfldname.getValue() + "/" + event.getFilename());
 
 		else if (event.getComponent().getCaption() == "Source and sink File")
-			txtfldSnSFile.setValue(Staticanalysispath +"/apps/ws-flowAnaluser/"+appname+"/"
+			txtfldSnSFile.setValue(relativepath +"/apps/ws-flowAnaluser/"+appname+"/"
 					+ txtfldname.getValue() + "/" + event.getFilename());
 
 	}
