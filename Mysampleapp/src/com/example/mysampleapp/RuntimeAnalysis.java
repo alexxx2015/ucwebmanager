@@ -56,29 +56,55 @@ public class RuntimeAnalysis extends VerticalLayout implements View
 	Label lblWelcome =new Label("Run Time Analysis");
 	textstaticanalysis.setSizeFull();
 //
-	MenuBar barmenu = new MenuBar();
+	 MenuBar barmenu = new MenuBar();
+	 /* MenuBar.MenuItem menuhome = barmenu.addItem("Home", null,		  null);
+	  @SuppressWarnings("deprecation") MenuBar.MenuItem menusa =
+	  barmenu.addItem("Static Analysis", null, null);
 	
-	@SuppressWarnings("deprecation")
-	MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
-	MenuBar.MenuItem menura = barmenu.addItem("runtime Analysis", null, null);
-	MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
-	MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
-
-	
+	  MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null,		  null); 
+	  MenuBar.MenuItem		  menura = barmenu.addItem("runtime Analysis", null, null); 
+	*/	barmenu.addItem("Home", new MenuBar.Command() 
+		{
+		    public void menuSelected(MenuBar.MenuItem selectedItem) 
+		    {
+		    	mainObj.navigator.navigateTo("");
+		    }
+		});
+		barmenu.addItem("Static Analysis", new MenuBar.Command() 
+		{
+		    public void menuSelected(MenuBar.MenuItem selectedItem) 
+		    {
+		    	mainObj.navigator.navigateTo("Main");
+		    }
+		});
+		barmenu.addItem("Instrumentation", new MenuBar.Command() 
+		{
+		    public void menuSelected(MenuBar.MenuItem selectedItem) 
+		    {
+		    	mainObj.navigator.navigateTo("Instrumentation");
+		    }
+		});
+		barmenu.addItem("runtime Analysis", new MenuBar.Command() 
+		{
+		    public void menuSelected(MenuBar.MenuItem selectedItem) 
+		    {
+		    	mainObj.navigator.navigateTo("Runtime");
+		    }
+		});
 	
 	setMargin(true);
 	//
 	HorizontalLayout hlayoutmenu=new  HorizontalLayout();
 	hlayoutmenu.setSpacing(true);
-	hlayoutmenu.addComponent(btnprev);		
+	//hlayoutmenu.addComponent(btnprev);		
 	hlayoutmenu.addComponent(barmenu);
 	
-	hlayoutmenu.addComponent(btnnext);
+	//hlayoutmenu.addComponent(btnnext);
 	hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
-	hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
-	hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+	/*hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
+	hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);*/
 	addComponent(hlayoutmenu);
-
+	 this.setComponentAlignment(hlayoutmenu,Alignment.TOP_CENTER);
 	//
 	//addComponent(lblWelcome);
 	//addComponent(btnprev);

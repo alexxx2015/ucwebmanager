@@ -11,8 +11,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 
+import com.vaadin.server.VaadinServlet;
+
 public class StaticAnalyser {
-	String Projectlocation = new File("").getAbsolutePath();
+	//String Projectlocation = new File("").getAbsolutePath();
+	String Projectlocation=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
 	String databasedriver;
 	Connection conn = null;
 	MysampleappUI mainObj;
@@ -66,6 +69,7 @@ public class StaticAnalyser {
 						while ((s = in.readLine()) != null) {
 							System.out.println(s);
 						}
+					
 						int status = p.waitFor();
 
 						if (status == 0) {

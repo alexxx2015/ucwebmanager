@@ -1,3 +1,7 @@
+/*This class is the home page of our application. It contains the summary table which contains the list of different applications and 
+ * the status of analysis, instrumentation and run. We can navigate to other views from this view on the basis of the action we choose
+ * 
+ * */
 package com.example.mysampleapp;
 
 import java.io.BufferedOutputStream;
@@ -51,6 +55,7 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.server.Page;
+import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Alignment;
@@ -82,13 +87,19 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 	String dbpath;
 	Grid gridmain = new Grid();
 	String databasedriver ;
+	//
 	int count;
 	String relativepath;
 
 	public NextPage(MysampleappUI objmain) {
 		mainObj = objmain;
-		relativepath = new File("").getAbsolutePath();
-
+		//relativepath = new File("").getAbsolutePath();
+		relativepath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
+		//relativepath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
+		//String relativepathtemp=VaadinServlet.getCurrent().getServletContext().getContextPath();
+		
+		//String basepath = getApplication().getContext().getBaseDirectory().getAbsolutePath();
+		
 		try {
 			prop.load(inputStream);
 		} catch (IOException e2) {
@@ -96,7 +107,8 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 			e2.printStackTrace();
 		}
 
-		//Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
+		//Staticanalysispath =new File("").getAbsolutePath();
+		Staticanalysispath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
 		databasedriver=prop.getProperty("databasedriver");
 		
 		addStyleName("backColorGrey");
@@ -112,8 +124,8 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 		btnprev.setStyleName("v-button");
 		List<List<String>> Files = new ArrayList<List<String>>();
 		HorizontalLayout horiprevnext = new HorizontalLayout();
-		horiprevnext.addComponent(btnprev);
-		horiprevnext.addComponent(btnnext);
+		/*horiprevnext.addComponent(btnprev);
+		horiprevnext.addComponent(btnnext);*/
 		HorizontalLayout horicore = new HorizontalLayout();
 		VerticalLayout verticalbuttons = new VerticalLayout();
 		Button btnruntime = new Button("RunTime Analysis");
@@ -129,9 +141,9 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 		btninstrument.addStyleName("big");
 
 		// setMargin(true);
-		verticalbuttons.addComponent(btnstatic);
+		/*verticalbuttons.addComponent(btnstatic);
 		verticalbuttons.addComponent(btninstrument);
-		verticalbuttons.addComponent(btnruntime);
+		verticalbuttons.addComponent(btnruntime);*/
 		verticalbuttons.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
 		verticalbuttons.setSpacing(false);
 		verticalbuttons.setSizeFull();
@@ -149,8 +161,8 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 			prop.load(inputStream);
 			dbpath = relativepath + prop.getProperty("databasepath");
 
-			new File("").getAbsolutePath();
-			System.out.println("database path is " + dbpath);
+			
+			
 			// set the properties value
 			prop.setProperty("database", "localhost");
 			prop.setProperty("dbuser", "mkyong");
@@ -174,53 +186,11 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 				System.out.println("could not create connection to database " + connectionstring);
 			// Have a container of some type to contain the data
 
-			System.out.println("file read start");
+			
 			BeanItemContainer<FileInfo> filedata = new BeanItemContainer<>(FileInfo.class);
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			Document doc = docBuilder.parse(new File("C:/Users/Student/Samplefiledata.xml"));
-			doc.getDocumentElement().normalize();
-			System.out.println("Root element of the doc is " + doc.getDocumentElement().getNodeName());
-			NodeList listOffile = doc.getElementsByTagName("File");
-			int totalFile = listOffile.getLength();
-			System.out.println("Total no of File : " + totalFile);
-			for (int s = 0; s < listOffile.getLength(); s++) {
-
-				Node FileNode = listOffile.item(s);
-				if (FileNode.getNodeType() == Node.ELEMENT_NODE) {
-
-					Element FileElement = (Element) FileNode;
-
-					// -------
-					NodeList NameList = FileElement.getElementsByTagName("Name");
-					Element NameElement = (Element) NameList.item(0);
-					NodeList textNameList = NameElement.getChildNodes();
-					System.out.println("First Name : " + ((Node) textNameList.item(0)).getNodeValue().trim());
-					// -------
-					NodeList StatusList = FileElement.getElementsByTagName("Status");
-					Element StatusElement = (Element) StatusList.item(0);
-
-					NodeList textStatusList = StatusElement.getChildNodes();
-					System.out.println("Last Name : " + ((Node) textStatusList.item(0)).getNodeValue().trim());
-
-					// ----
-					NodeList TimeList = FileElement.getElementsByTagName("Time");
-					Element TimeElement = (Element) TimeList.item(0);
-
-					NodeList textTimeList = TimeElement.getChildNodes();
-					System.out.println("Age : " + ((Node) textTimeList.item(0)).getNodeValue().trim());
-					List<String> listtoadd = new ArrayList<String>();
-					listtoadd.add(((Node) textNameList.item(0)).getNodeValue().trim());
-					listtoadd.add(((Node) textStatusList.item(0)).getNodeValue().trim());
-					listtoadd.add(((Node) textTimeList.item(0)).getNodeValue().trim());
-					Files.add(listtoadd);
-
-					// ------
-
-				} // end of if clause
-
-			} // end of for loop with s var
-			while (rs.next()) {
+						while (rs.next()) {
 
 				rs.getString("Name");
 				rs.getString("status");
@@ -228,7 +198,7 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 				Files.add(Arrays.asList(rs.getString("Name"), rs.getString("status"), rs.getString("time")));
 			}
 
-		} catch (IOException | SAXException | ParserConfigurationException ex) {
+		} catch (IOException | ParserConfigurationException ex) {
 			System.out.println(ex.getMessage());
 		} catch (SQLException e1) {
 			// TODO Auto-generated catch block
@@ -303,21 +273,18 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 					mainObj.navigator.navigateTo("Main/" + filename);
 					break;
 				case "Instrumentation":
-					System.out.println(value + "Yeah");
+					
 
 					mainObj.navigator.navigateTo("Instrumentation/" + filename);
 
 					break;
 				case "Runtime Analysis":
-					System.out.println(value + "Yeah");
+					
 					mainObj.navigator.navigateTo("Runtime/" + filename);// not
 																		// working
 																		// this
 																		// navigation
-					// mainObj.navigator.navigateTo("NextPage");
-					/*
-					 * default: mainObj.navigator.navigateTo(""); break;
-					 */
+					
 				}
 
 			} catch (Exception e1) {
@@ -346,39 +313,58 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 		for (int i = 0; i < Files.size(); i++) {
 			gridmain.addRow(Files.get(i).get(0), Files.get(i).get(1), "empty", "Go", Files.get(i).get(2), "Stop");
 		}
-		/*
-		 * gridmain.addRow("Nicolaus Copernicus", "Not Yet started"
-		 * ,"empty","Go",new Date()); gridmain.addRow("Galileo Galilei",
-		 * "Static analysis done","empty","Go",new Date()); gridmain.addRow(
-		 * "Johannes Kepler","Instrumentation done","empty","Go",new Date());
-		 */
-		// read data from xml file and display in grid
-
-		// addComponent(lblwelcome,1,0,2,0);
-		/*
-		 * MenuBar barmenu = new MenuBar();
-		 * 
-		 * @SuppressWarnings("deprecation") MenuBar.MenuItem menusa =
-		 * barmenu.addItem("Static Analysis", null, null); MenuBar.MenuItem
-		 * menura = barmenu.addItem("runtime Analysis", null, null);
-		 * MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null,
-		 * null); MenuBar.MenuItem menuhome = barmenu.addItem("Home", null,
-		 * null);
-		 */
+		
+		
+		  MenuBar barmenu = new MenuBar();
+		 /* MenuBar.MenuItem menuhome = barmenu.addItem("Home", null,		  null);
+		  @SuppressWarnings("deprecation") MenuBar.MenuItem menusa =
+		  barmenu.addItem("Static Analysis", null, null);
+		
+		  MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null,		  null); 
+		  MenuBar.MenuItem		  menura = barmenu.addItem("runtime Analysis", null, null); 
+		*/	barmenu.addItem("Home", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("");
+			    }
+			});
+			barmenu.addItem("Static Analysis", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Main");
+			    }
+			});
+			barmenu.addItem("Instrumentation", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Instrumentation");
+			    }
+			});
+			barmenu.addItem("runtime Analysis", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Runtime");
+			    }
+			});
 
 		// setMargin(true);
 		//
-		/*
-		 * HorizontalLayout hlayoutmenu=new HorizontalLayout();
-		 * hlayoutmenu.setSpacing(true); hlayoutmenu.addComponent(btnprev);
-		 * hlayoutmenu.addComponent(barmenu);
-		 * 
-		 * hlayoutmenu.addComponent(btnnext);
-		 * hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
-		 * hlayoutmenu.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
-		 * hlayoutmenu.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
-		 * addComponent(hlayoutmenu);
-		 */
+		
+		  HorizontalLayout hlayoutmenu=new HorizontalLayout();
+		  hlayoutmenu.setSpacing(true);
+		 
+		  hlayoutmenu.addComponent(barmenu);
+		  
+		
+		  hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		 
+		 
+		  addComponent(hlayoutmenu);
+		  this.setComponentAlignment(hlayoutmenu,Alignment.TOP_CENTER );
 		// addComponent(btnnext);
 		// addComponent(btnprev);
 		// pnlgrid.setContent(gridmain);
@@ -411,41 +397,9 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 			}
 		});
 
-		btnprev.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("");
-
-			}
-		});
-		btnnext.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("Main");
-
-			}
-		});
-		btninstrument.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("Instrumentation");
-
-			}
-		});
-		btnstatic.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("Main");
-
-			}
-		});
-		btnruntime.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("Runtime");
-
-			}
-		});
+		
+		
+		
 
 	}
 
@@ -515,6 +469,7 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 	@Override
 	public OutputStream receiveUpload(String filename, String MIMEType) {
 		File directory = new File(relativepath + "/apps/ws-flowAnaluser" + "/" + filename + "/Source");
+		
 		if (!directory.exists()) {
 			if (directory.mkdirs()) {
 				System.out.println("Directory is created!");
@@ -540,7 +495,7 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 	@Override
 	public void uploadSucceeded(Upload.SucceededEvent event) {
 		// unzip(Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles/"+event.getFilename(),Staticanalysispath+"/"+event.getFilename()+"/"+"Applicationfiles");
-		unZipIt(Staticanalysispath + "/apps" + "/" + event.getFilename() + "/Source/" + event.getFilename(),
+		unZipIt(Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + event.getFilename() + "/Source/" + event.getFilename(),
 				Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + event.getFilename() + "/Source");
 		try {
 			//
@@ -553,32 +508,39 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 			int count = rs.getInt("rowcount1");
 			//
 			
-			Statement statement;
-			statement = conn.createStatement();
+			//removed sqlstatement
+			//Statement statement;
+			//statement = conn.createStatement();
 			 
-			 rs = statement.executeQuery(
-					"SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='" + event.getFilename() + "'");
-			count = rs.getInt("rowcount1");
+			 //rs = statement.executeQuery(
+				//	"SELECT count(*) AS rowcount1 FROM Staticanalysis WHERE Name='" + event.getFilename() + "'");
+			//count = rs.getInt("rowcount1");
+			//removed sqlstatemnet
 			if (count == 0)
 			{
 				
-				statement.executeUpdate("insert into Staticanalysis values('" + event.getFilename()	+ "',DateTime('now'), 'Not Yet Started')");
+			//	statement.executeUpdate("insert into Staticanalysis values('" + event.getFilename()	+ "',DateTime('now'), 'Not Yet Started')");
 				
 				sql="insert into Staticanalysis values(?,?,'Not Yet Started')";
-				
+				preparedStatement = conn.prepareStatement(sql);
 				preparedStatement.setString(1,event.getFilename());	
 				preparedStatement.setDate(2, new java.sql.Date(Calendar.getInstance().getTime().getTime()));
+				
 				
 				 count = preparedStatement.executeUpdate();
 			}
 			else if (count == 1)
 			{
-				sql="insert into Staticanalysis values('" + event.getFilename()	+ "',DateTime('now'), 'Not Yet Started')";
-				statement.executeUpdate("UPDATE Staticanalysis SET status ='Not Yet Started' WHERE Name='" + event.getFilename() + "'");
+				sql="UPDATE Staticanalysis SET status ='Not Yet Started' WHERE Name=?";
+				//statement.executeUpdate("UPDATE Staticanalysis SET status ='Not Yet Started' WHERE Name='" + event.getFilename() + "'");
+				preparedStatement.close();
+				preparedStatement = conn.prepareStatement(sql);
+				preparedStatement.setString(1,event.getFilename());					
+				 count = preparedStatement.executeUpdate();
 				
 			}
 
-			statement.close();
+			//statement.close();
 
 			Page.getCurrent().reload();
 		} catch (SQLException e) {
@@ -604,27 +566,28 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 		ResultSet rs = null;
 		try {
 			if (conn != null) {
-				Statement statement;
-
-				statement = conn.createStatement();
-
-				statement.setQueryTimeout(30); // set timeout to 30 sec.
-
-				// statement.executeUpdate("insert into Staticanalysis
-				// values('program5',DateTime('now'), 'Not Yet Started')");
-				rs = statement.executeQuery("select * from Staticanalysis ");
+//				Statement statement;
+//				statement = conn.createStatement();
+//				statement.setQueryTimeout(30); // set timeout to 30 sec.				
+//				rs = statement.executeQuery("select * from Staticanalysis ");
+				
+				String sql="select * from Staticanalysis ";
+				PreparedStatement preparedStatement  = conn.prepareStatement(sql);			
+				
+				
+				rs = preparedStatement.executeQuery();
 			} else
 				System.out.println("could not create connection to database " + connectionstring);
 			BeanItemContainer<FileInfo> filedata = new BeanItemContainer<>(FileInfo.class);
 			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-			Document doc = docBuilder.parse(new File("C:/Users/Student/Samplefiledata.xml"));
-			doc.getDocumentElement().normalize();
-			System.out.println("Root element of the doc is " + doc.getDocumentElement().getNodeName());
-			NodeList listOffile = doc.getElementsByTagName("File");
-			int totalFile = listOffile.getLength();
-			System.out.println("Total no of File : " + totalFile);
-			for (int s = 0; s < listOffile.getLength(); s++) {
+			//Document doc = docBuilder.parse(new File("C:/Users/Student/Samplefiledata.xml"));
+			//doc.getDocumentElement().normalize();
+			//System.out.println("Root element of the doc is " + doc.getDocumentElement().getNodeName());
+			//NodeList listOffile = doc.getElementsByTagName("File");
+			//int totalFile = listOffile.getLength();
+			//System.out.println("Total no of File : " + totalFile);
+			/*//for (int s = 0; s < listOffile.getLength(); s++) {
 
 				Node FileNode = listOffile.item(s);
 				if (FileNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -660,7 +623,7 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 				} // end of if clause
 
 			} // end of for loop with s var
-			while (rs.next()) {
+*/			while (rs.next()) {
 
 				rs.getString("Name");
 				rs.getString("status");
@@ -672,7 +635,7 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 				gridmain.addRow(files.get(i).get(0), files.get(i).get(1), "empty", "Go", files.get(i).get(2), "Stop");
 			}
 			// Have a container of some type to contain the data
-		} catch (SQLException | ParserConfigurationException | SAXException | IOException e) {
+		} catch (SQLException | ParserConfigurationException   e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

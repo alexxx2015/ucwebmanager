@@ -1,3 +1,10 @@
+/*This is the view for static analysis of applications. We can save the configuration for specific runs of any applicatin we chose in 
+ * the summary table contained in the Home page i.e Next Page .The configuration file is saved in specific folder structure in the
+ * file system .We can also run the analysis with the help of the generated configuration file. Different runs should be able to run 
+ * simultaneously in our application which produce report and log files for the run. The report is used in the instrumentation phase.
+ * 
+ * 
+ * */
 package com.example.mysampleapp;
 
 import java.io.File;
@@ -6,10 +13,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +35,9 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.data.Item;
@@ -37,9 +47,9 @@ import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.Action;
 import com.vaadin.event.ItemClickEvent;
 import com.vaadin.event.ItemClickEvent.ItemClickListener;
-import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
+import com.vaadin.server.VaadinServlet;
 import com.vaadin.shared.MouseEventDetails;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -75,8 +85,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 	String buttonname = "b";
 	Properties prop = new Properties();
 	String propFileName = "Config.properties";//
-	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(
-			propFileName);
+	InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
 	// create global variables
 	String analysisname, modvalue, classpath, thirdpartylib, stubs, temppath;
 	boolean multhithreaded;
@@ -86,8 +95,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 	String snsfilevalue, strUploadFilePathCG;
 	Object itemid, selecteditemidsns;
 	OutputStream output = null;
-	Table gridclasspath, tblthirdpartylib, tblpointstoinclude,
-			tblpointstoexclude, tblsourcensinks;
+	Table gridclasspath, tblthirdpartylib, tblpointstoinclude,			tblpointstoexclude, tblsourcensinks;
 	TextField txtfldSnSFile = new TextField("File Name");
 	TextField txtfldname = new TextField("Analysis Name");
 	CheckBox chkmultithreaded = new CheckBox("Multithreaded");
@@ -108,32 +116,27 @@ public class Main extends VerticalLayout implements View, Receiver,
 	Label lblsuccessmessageCG, lblsuccessmessageReport, lblsuccessmessageSDG;
 	TextField txtfldEntryPoint = new TextField("Entry Point");
 	StaticAnalyser analyser;
-	String relativepath;
+	String relativepath,strBaseFolders;
+	Button btnruntime,btnstatic,btninstrument,btnsave, btnrun, btnselectsnsFile;
 
-	// uploadSDGFile.setButtonCaption("Browse");
+	
 	Upload uploadCGFile = new Upload("CGFile", this);
-
+	
 	@SuppressWarnings("deprecation")
-	public Main(MysampleappUI o) { // final VerticalLayout layout = new
-									// VerticalLayout();
-		// this.getSession().getConfiguration().getInitParameters();
-		// Panel panel = new Panel("Static analysis");
+	public Main(MysampleappUI o) { 
 
 		this.mainObj = o;
 
 		try {
-
+			//InitialiseUIComponents();
 			final Subwindow subwin = new Subwindow();
 			prop.load(inputStream);
 			output = new FileOutputStream("config.properties");
-			Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
-			String temppath = new File("").getAbsolutePath()
-					+ "/StaticAnalysis";
-			System.out.println("relativepath is  is " + temppath
-					+ " and absolutepath is " + relativepath);
-			prop.setProperty("database", "localhost");
-			prop.setProperty("dbuser", "mkyong");
-			prop.setProperty("dbpassword", "password");
+			//Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
+			//Staticanalysispath = new File("").getAbsolutePath();
+			Staticanalysispath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
+			
+			strBaseFolders=prop.getProperty("BaseFolders");
 			strUploadFilePathCG = prop.getProperty("UploadFilePath");
 
 			// save properties to project root folder
@@ -160,16 +163,9 @@ public class Main extends VerticalLayout implements View, Receiver,
 		Label lblsensitiveness = new Label("Object Sensitiveness");
 		Label lblindirectflows = new Label("Indirect Flows");
 
-		// Label lblname=new Label("Analysis Name");
-		// Label lblmode=new Label("Mode");
-		// Label lblpath=new Label("ClassPath");
-		// Label lblsource=new Label("Source and Sinks");
+		
 		Label lblthirdpartylib = new Label("ThirdParty Library");
-		// Label lblSDGFile=new Label("SDGFile");
-		// Label lblCGFile=new Label("CGFile");
-		// Label lblReportFile=new Label("Report File");
-		// TextField txtfldSnSFile = new TextField("File Name");
-
+		
 		txtSDGFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtCGFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtReportFile.setWidth(24.6f, ComboBox.UNITS_EM);
@@ -180,8 +176,8 @@ public class Main extends VerticalLayout implements View, Receiver,
 		txtlogFile.setWidth(24.6f, ComboBox.UNITS_EM);
 		cmbpointstopolicy.setWidth(24.6f, ComboBox.UNITS_EM);
 		txtfldSnSFile.setWidth(24.6f, ComboBox.UNITS_EM);
-		relativepath = new File("").getAbsolutePath();
-
+		//relativepath = new File("").getAbsolutePath();
+		relativepath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
 		uploadCGFile.addSucceededListener(this);
 		uploadSDGFile.addSucceededListener(this);
 		// uploadReportFile.addSucceededListener(this);
@@ -230,28 +226,65 @@ public class Main extends VerticalLayout implements View, Receiver,
 		TextField txtfldpath = new TextField("Class Path");
 		TextField txtfldthirdpartylib = new TextField("Third Party Library");
 
-		Button btnnext = new Button("Next");
-		Button btnprev = new Button("Prev");
+		
 
 		Button btnsave = new Button("Save Configuration");
 		Button btnrun = new Button("Run Analysis");
 		Button btnselectsnsFile = new Button("Select sns File");
+		
+		 MenuBar barmenu = new MenuBar();
+		 barmenu.addItem("Home", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("");
+			    }
+			});
+			barmenu.addItem("Static Analysis", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Main");
+			    }
+			});
+			barmenu.addItem("Instrumentation", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Instrumentation");
+			    }
+			});
+			barmenu.addItem("runtime Analysis", new MenuBar.Command() 
+			{
+			    public void menuSelected(MenuBar.MenuItem selectedItem) 
+			    {
+			    	mainObj.navigator.navigateTo("Runtime");
+			    }
+			});
+	
+		HorizontalLayout hlayoutmenu=new HorizontalLayout();
+		  hlayoutmenu.setSpacing(true);
+		 
+		  hlayoutmenu.addComponent(barmenu);
+		  
+		
+		  hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		 
+		  addComponent(hlayoutmenu);
+		  this.setComponentAlignment(hlayoutmenu,Alignment.TOP_CENTER);
 
-		MenuBar barmenu = new MenuBar();
-
-		@SuppressWarnings("deprecation")
-		MenuBar.MenuItem menusa = barmenu.addItem("Home", null, null);
-		MenuBar.MenuItem menura = barmenu.addItem("Home", null, null);
-		MenuBar.MenuItem menuinstr = barmenu.addItem("Home", null, null);
-		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+		
 
 		// Button btnruntime =new Button();
-		Button btnruntime = new Button("RunTime Analysis");
+		//Button
+		btnruntime = new Button("RunTime Analysis");
 		btnruntime.setSizeFull();
-		Button btnstatic = new Button("Static Analysis");
+		//Button
+		btnstatic = new Button("Static Analysis");
 		btnstatic.setSizeFull();
 
-		Button btninstrument = new Button("Instrumentation");
+		//Button 
+		btninstrument = new Button("Instrumentation");
 		btninstrument.setSizeFull();
 		// btnstatic.addStyleName("big");
 		// btnruntime.addStyleName("big");
@@ -261,18 +294,18 @@ public class Main extends VerticalLayout implements View, Receiver,
 		setMargin(true);
 		//
 		HorizontalLayout horiprevnext = new HorizontalLayout();
-		horiprevnext.addComponent(btnprev);
+		/*horiprevnext.addComponent(btnprev);
 		horiprevnext.addComponent(btnnext);
 		horiprevnext.setComponentAlignment(btnprev, Alignment.TOP_LEFT);
-		horiprevnext.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);
+		horiprevnext.setComponentAlignment(btnnext, Alignment.TOP_RIGHT);*/
 
 		HorizontalLayout hlayoutcore = new HorizontalLayout();
 
 		VerticalLayout vlayoutmenu = new VerticalLayout();
 		// vlayoutmenu.setSpacing(true);
-		vlayoutmenu.addComponent(btnstatic);
+		/*vlayoutmenu.addComponent(btnstatic);
 		vlayoutmenu.addComponent(btninstrument);
-		vlayoutmenu.addComponent(btnruntime);
+		vlayoutmenu.addComponent(btnruntime);*/
 		vlayoutmenu.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
 		vlayoutmenu.setSpacing(false);
 
@@ -322,22 +355,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 		FormLayout fl = new FormLayout();
 		TextArea txterror = new TextArea(
 				"You cannot add the values to the table since another duplicate row is already present");
-		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
-
-		// HorizontalLayout chkhorilay=new HorizontalLayout();
-		// VerticalLayout lblvlay=new VerticalLayout();
-		// VerticalLayout chkvlay=new VerticalLayout();
-		// lblvlay.addComponent(lblmultithreaded);
-		// lblvlay.addComponent(lblsensitiveness);
-		// lblvlay.addComponent(lblindirectflows);
-		// lblvlay.addComponent(lblcomputechops);
-
-		// chkvlay.addComponent(chksensitiveness);
-		// chkvlay.addComponent(chkindirectflows);
-		// chkvlay.addComponent(chkcomputechops);
-		// chkvlay.addComponent(chkmultithreaded);
-		// chkhorilay.addComponents(lblvlay,chkvlay);
-		// fl.addComponent(chkhorilay);
+		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);	
 
 		fl.addComponent(txtfldname);
 		fl.addComponent(cmbmode);
@@ -416,13 +434,13 @@ public class Main extends VerticalLayout implements View, Receiver,
 		childgrid.addComponent(btnselectsnsFile, 1, 7, 1, 7);
 		// addComponent(childgrid);
 
-		btnnext.addClickListener(new Button.ClickListener() {
+		/*btnnext.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 
 				mainObj.navigator.navigateTo("");
 
 			}
-		});
+		});*/
 
 		btnsave.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
@@ -432,13 +450,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			}
 		});
 
-		btninstrument.addClickListener(new Button.ClickListener() {
-			public void buttonClick(ClickEvent event) {
-
-				mainObj.navigator.navigateTo("Instrumentation");
-
-			}
-		});
+		
 		btnstatic.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 
@@ -457,6 +469,8 @@ public class Main extends VerticalLayout implements View, Receiver,
 		btnrun.addClickListener(new Button.ClickListener() {
 			public void buttonClick(ClickEvent event) {
 				analyser = new StaticAnalyser();
+				if(!new File(relativepath + "/apps/ws-flowAnaluser" + "/"
+						+ appname + "/" + txtfldname.getValue()+"/StaticAnalysis.xml").exists())					
 				saveConfigurationxml("StaticAnalysis");
 				if(new File(relativepath + "/apps/ws-flowAnaluser" + "/"
 						+ appname + "/" + txtfldname.getValue()).exists())
@@ -500,11 +514,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 					});
 					UI.getCurrent().addWindow(msgbox);	
 				}
-				/*analyser.analyseFile(Staticanalysispath + "/apps/ws-flowAnaluser" + "/"
-						+ appname + "/" + txtfldname.getValue(),
-						Staticanalysispath + "/apps/ws-flowAnaluser" + "/" + appname + "/"
-								+ txtfldname.getValue() + "/"
-								+ "StaticAnalysis" + ".xml",appname,mainObj);*/
+				
 				
 			}
 		});
@@ -716,7 +726,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 							"ThirdPartyLibrary").getValue();
 
 					txt.setEnabled(true);
-					Button buttonnam = new Button(buttonname);
+					/*Button buttonnam = new Button(buttonname);
 					addComponent(buttonnam);
 					buttonnam.setClickShortcut(KeyCode.ENTER);
 					buttonnam.addClickListener(new Button.ClickListener() {
@@ -737,7 +747,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 							removeComponent(buttonnam);
 
 						}
-					});
+					});*/
 				}
 			}
 
@@ -767,10 +777,12 @@ public class Main extends VerticalLayout implements View, Receiver,
 					row.getItemProperty("Classpath").setValue(txt);
 
 					gridclasspath.addItem(new Object[] { txt }, newItemId);
-					Button buttonnam = new Button(buttonname);
+					/*Button buttonnam = new Button(buttonname);
 					addComponent(buttonnam);
 
 					buttonnam.setClickShortcut(KeyCode.ENTER);
+					
+*/					
 					/*
 					 * buttonnam.addClickListener(new Button.ClickListener() {
 					 * 
@@ -831,7 +843,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 
 					tblthirdpartylib.addItem(new Object[] { txt }, newItemId);
 
-					Button buttonnamin = new Button(buttonname);
+					/*Button buttonnamin = new Button(buttonname);
 					addComponent(buttonnamin);
 
 					buttonnamin.setClickShortcut(KeyCode.ENTER);
@@ -853,7 +865,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 							removeComponent(buttonnamin);
 
 						}
-					});
+					});*/
 
 				} else if (action.getCaption() == "Delete") {
 					/*
@@ -912,26 +924,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 					row.getItemProperty("Points To Include").setValue(txt);
 
 					tblpointstoinclude.addItem(new Object[] { txt }, newItemId);
-					/*
-					 * Button buttonnam = new Button(buttonname);
-					 * addComponent(buttonnam);
-					 * 
-					 * buttonnam.setClickShortcut(KeyCode.ENTER);
-					 * buttonnam.addClickListener(new Button.ClickListener() {
-					 * 
-					 * @Override public void buttonClick(ClickEvent event) {
-					 * tblpointstoinclude.addItemAfter(new Object[] { txt },
-					 * newItemId); Item row =
-					 * tblpointstoinclude.getItem(newItemId);
-					 * row.getItemProperty("Points To Include").setValue(txt);
-					 * System.out.println("the value of textfield is " +
-					 * txt.getValue());
-					 * 
-					 * txt.setEnabled(false); buttonnam.removeClickShortcut();
-					 * removeComponent(buttonnam);
-					 * 
-					 * } });
-					 */
+					
 
 				} else if (action.getCaption() == "Delete") {
 					/*
@@ -1065,7 +1058,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 		});
 
 		cmbmode.addValueChangeListener(new Property.ValueChangeListener() {
-			private static final long serialVersionUID = -5188369735622627751L;
+			//private static final long serialVersionUID = -5188369735622627751L;
 
 			public void valueChange(ValueChangeEvent event) {
 				if (cmbmode.getValue() != null
@@ -1184,7 +1177,11 @@ public class Main extends VerticalLayout implements View, Receiver,
 				else
 					strTableData = strTableData + listtabledata.get(i);
 			}
-			String tblvalue = strTableData;
+			String tblvalue="";
+			if(strTableData!="")
+				
+			 tblvalue = relativepath+"/apps/ws-flowAnaluser" + "/" + appname
+					+ "/" + "Source" + "/" + strTableData;
 			attrvaluetpl.setValue(tblvalue);
 			thirdPartyLibs.setAttributeNode(attrvaluetpl);
 
@@ -1270,6 +1267,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			Element reportfile = doc.createElement("reportfile");
 			Element logfile = doc.createElement("logFile");
 			analysis.appendChild(reportfile);
+			analysis.appendChild(logfile);
 			Attr attrreport = doc.createAttribute("value");
 			Attr attrlog = doc.createAttribute("value");
 			if (cmbmode.getValue() == "load") {
@@ -1403,8 +1401,8 @@ public class Main extends VerticalLayout implements View, Receiver,
 			e.printStackTrace();
 		}
 	}
-
-	// code ends
+   
+	
 
 	private List<String> Readfromcommontable(Table tablename) {
 
@@ -1505,6 +1503,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 				System.out.println("enter view changeevent " + appname);
 			}
 			txtfldname.setValue(appname);
+			if(appname!="")fillStaticAnalysisTextboxes(appname);
 		}
 
 		// TODO Auto-generated method stub
@@ -1559,9 +1558,447 @@ public class Main extends VerticalLayout implements View, Receiver,
 	}
 
 	public void uploadFailed(Upload.FailedEvent event) {
-		// Log the failure on screen.
+	
 
 	}
+ //method to initialise and define the  UI components ..it is not called inside constructor due to time constraint to test..but it should be used..    
+ public void InitialiseUIComponents()
+    {
+    	final Subwindow subwin = new Subwindow();
+		try {
+			prop.load(inputStream);
+		 
+		output = new FileOutputStream("config.properties");
+		//Staticanalysispath = prop.getProperty("StaticAnalysisoutputpath");
+		//Staticanalysispath = new File("").getAbsolutePath();
+		Staticanalysispath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
+		String temppath = new File("").getAbsolutePath()
+				+ "/StaticAnalysis";
+		System.out.println("relativepath is  is " + temppath
+				+ " and absolutepath is " + relativepath);
+		prop.setProperty("database", "localhost");
+		prop.setProperty("dbuser", "mkyong");
+		prop.setProperty("dbpassword", "password");
+		strUploadFilePathCG = prop.getProperty("UploadFilePath");
+		Label lblwelcome = new Label("Static Analysis");
+		lblwelcome.setStyleName("labelwelcome");
+		ComboBox cmbselectpr = new ComboBox();
+		cmbselectpr.setCaption("Select Program");
 
-	//
+		lblsuccessmessageCG = new Label();
+		lblsuccessmessageReport = new Label();
+		lblsuccessmessageSDG = new Label();
+
+		Label lblmultithreaded = new Label("Multithreaded");
+		Label lblcomputechops = new Label("Compute Chops");
+		Label lblsensitiveness = new Label("Object Sensitiveness");
+		Label lblindirectflows = new Label("Indirect Flows");
+
+		
+		Label lblthirdpartylib = new Label("ThirdParty Library");
+		
+		txtSDGFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtCGFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtReportFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtpointtofallback.setWidth(24.6f, ComboBox.UNITS_EM);
+		cmbmode.setWidth(24.6f, ComboBox.UNITS_EM);
+		cmbstub.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtfldEntryPoint.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtlogFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		cmbpointstopolicy.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtfldSnSFile.setWidth(24.6f, ComboBox.UNITS_EM);
+		//relativepath = new File("").getAbsolutePath();
+		relativepath=VaadinServlet.getCurrent().getServletContext().getRealPath("/");
+		uploadCGFile.addSucceededListener(this);
+		uploadSDGFile.addSucceededListener(this);
+		Upload uploadSnSfile = new Upload("Source and sink File", this);
+		uploadSnSfile.addSucceededListener(this);
+
+		txtfldname.setWidth(24.6f, ComboBox.UNITS_EM);
+		txtfldname.setValue(appname);
+		IndexedContainer cmbocontainer = new IndexedContainer();
+		cmbocontainer.addContainerProperty("name", String.class, null);
+
+		cmbmode.setNullSelectionAllowed(false);
+
+		cmbmode.addItem("load");
+		cmbmode.addItem("build");
+		cmbmode.setValue("build");
+		if (cmbmode.getValue() != null && (cmbmode.getValue() == "build")) {
+			uploadSDGFile.setVisible(false);
+			uploadCGFile.setVisible(false);
+
+		} else {
+			uploadSDGFile.setVisible(true);
+			uploadCGFile.setVisible(true);
+
+		}
+		cmbstub.setNullSelectionAllowed(false);
+
+		cmbstub.addItem("JRE_14");
+		cmbstub.addItem("JRE_15");
+		cmbstub.addItem("NO_STUBS");
+		cmbstub.setValue("NO_STUBS");
+
+		cmbpointstopolicy.setNullSelectionAllowed(false);
+
+		cmbpointstopolicy.addItem("RTA");
+		cmbpointstopolicy.addItem("TYPE_BASED");
+		cmbpointstopolicy.addItem("INSTANCE_BASED");
+		cmbpointstopolicy.addItem("OBJECT_SENSITIVE");
+		cmbpointstopolicy.addItem("N1_OBJECT_SENSITIVE");
+		cmbpointstopolicy.addItem("UNLIMITED_OBJECT_SENSITIVE");
+		cmbpointstopolicy.addItem("N1_CALL_STACK");
+		cmbpointstopolicy.addItem("N2_CALL_STACK");
+		cmbpointstopolicy.addItem("N3_CALL_STACK");
+		cmbpointstopolicy.setValue("RTA");
+
+		TextField txtfldpath = new TextField("Class Path");
+		TextField txtfldthirdpartylib = new TextField("Third Party Library");
+
+		Button btnnext = new Button("Next");
+		Button btnprev = new Button("Prev");
+
+		Button btnsave = new Button("Save Configuration");
+		Button btnrun = new Button("Run Analysis");
+		Button btnselectsnsFile = new Button("Select sns File");
+
+		MenuBar barmenu = new MenuBar();
+
+		@SuppressWarnings("deprecation")
+		MenuBar.MenuItem menuhome = barmenu.addItem("Home", null, null);
+		MenuBar.MenuItem menusa = barmenu.addItem("Static Analysis", null, null);
+		MenuBar.MenuItem menuinstr = barmenu.addItem("Instrumentation", null, null);
+		MenuBar.MenuItem menura = barmenu.addItem("Run Time Analysis", null, null);
+		 HorizontalLayout hlayoutmenu=new HorizontalLayout();
+		  hlayoutmenu.setSpacing(true);
+		 
+		  hlayoutmenu.addComponent(barmenu);
+		  
+		
+		  hlayoutmenu.setComponentAlignment(barmenu, Alignment.TOP_CENTER);
+		 
+		  addComponent(hlayoutmenu);
+		  this.setComponentAlignment(hlayoutmenu,Alignment.TOP_CENTER);
+
+		
+
+		// Button btnruntime =new Button();
+		//Button
+		btnruntime = new Button("RunTime Analysis");
+		btnruntime.setSizeFull();
+		//Button
+		btnstatic = new Button("Static Analysis");
+		btnstatic.setSizeFull();
+
+		//Button
+		btninstrument = new Button("Instrumentation");
+		btninstrument.setSizeFull();
+		
+
+		setMargin(true);
+		//
+		HorizontalLayout horiprevnext = new HorizontalLayout();
+		
+
+		HorizontalLayout hlayoutcore = new HorizontalLayout();
+
+		VerticalLayout vlayoutmenu = new VerticalLayout();
+		// vlayoutmenu.setSpacing(true);
+		/*vlayoutmenu.addComponent(btnstatic);
+		vlayoutmenu.addComponent(btninstrument);
+		vlayoutmenu.addComponent(btnruntime);*/
+		vlayoutmenu.addComponent(new Label("&nbsp;", Label.CONTENT_XHTML));
+		vlayoutmenu.setSpacing(false);
+
+		HorizontalLayout hlayoutcoreinside = new HorizontalLayout();
+		gridclasspath = new Table("ClassPath");
+		gridclasspath.addContainerProperty("Classpath", TextField.class, null);
+		gridclasspath.setPageLength(5);
+		gridclasspath.setColumnWidth("Classpath", 400);
+		tblthirdpartylib = new Table("Third Party Library");
+		tblthirdpartylib.addContainerProperty("ThirdPartyLibrary",
+				TextField.class, null);
+		tblthirdpartylib.setPageLength(5);
+		tblthirdpartylib.setColumnWidth("ThirdPartyLibrary", 400);
+		tblpointstoinclude = new Table("Points To Include");
+		tblpointstoinclude.addContainerProperty("Points To Include",
+				TextField.class, null);
+		tblpointstoinclude.setPageLength(5);
+		tblpointstoinclude.setColumnWidth("Points To Include", 400);
+		tblpointstoexclude = new Table("Points To Exclude");
+		tblpointstoexclude.addContainerProperty("Points To Exclude",
+				TextField.class, null);
+		tblpointstoexclude.setPageLength(5);
+		tblpointstoexclude.setColumnWidth("Points To Exclude", 400);
+		// table for sinks and sources
+		// Button btnsubwindow=new Button("open subwindow");
+
+		tblsourcensinks = new Table("Source and Sinks");
+		tblsourcensinks.addContainerProperty("Types", TextField.class, null);
+		tblsourcensinks.addContainerProperty("Classes", TextField.class, null);
+		tblsourcensinks.addContainerProperty("Selector", TextField.class, null);
+		tblsourcensinks.addContainerProperty("Param", TextField.class, null);
+		tblsourcensinks.addContainerProperty("Include SubClasses",
+				CheckBox.class, null);
+		tblsourcensinks.addContainerProperty("Indirect Calls", CheckBox.class,
+				null);
+		tblsourcensinks.setPageLength(5);
+		tblsourcensinks.setColumnWidth("Types", 130);
+		tblsourcensinks.setColumnWidth("Include SubClasses", 130);
+		tblsourcensinks.setColumnWidth("Classes", 190);
+		tblsourcensinks.setColumnWidth("Selector", 190);
+		tblsourcensinks.setColumnWidth("Param", 190);
+		tblsourcensinks.setColumnWidth("Indirect Calls", 130);
+		// source and sinks table code ends
+
+		Panel pnltables = new Panel();
+
+		FormLayout fl = new FormLayout();
+		TextArea txterror = new TextArea(
+				"You cannot add the values to the table since another duplicate row is already present");
+		fl.setDefaultComponentAlignment(Alignment.BOTTOM_LEFT);
+
+		// HorizontalLayout chkhorilay=new HorizontalLayout();
+		// VerticalLayout lblvlay=new VerticalLayout();
+		// VerticalLayout chkvlay=new VerticalLayout();
+		// lblvlay.addComponent(lblmultithreaded);
+		// lblvlay.addComponent(lblsensitiveness);
+		// lblvlay.addComponent(lblindirectflows);
+		// lblvlay.addComponent(lblcomputechops);
+
+		// chkvlay.addComponent(chksensitiveness);
+		// chkvlay.addComponent(chkindirectflows);
+		// chkvlay.addComponent(chkcomputechops);
+		// chkvlay.addComponent(chkmultithreaded);
+		// chkhorilay.addComponents(lblvlay,chkvlay);
+		// fl.addComponent(chkhorilay);
+
+		fl.addComponent(txtfldname);
+		fl.addComponent(cmbmode);
+		fl.addComponent(cmbstub);
+		fl.addComponent(txtfldEntryPoint);
+		fl.addComponent(gridclasspath);
+		fl.addComponent(tblthirdpartylib);
+		fl.addComponent(txtSDGFile);
+		fl.addComponent(uploadSDGFile);
+		fl.addComponent(txtCGFile);
+		fl.addComponent(uploadCGFile);
+
+		fl.addComponent(txtReportFile);
+		fl.addComponent(txtlogFile);
+		fl.addComponent(cmbpointstopolicy);
+		fl.addComponent(txtpointtofallback);
+
+		fl.addComponent(tblpointstoinclude);
+		HorizontalLayout HorizontalLayout = new HorizontalLayout();
+		HorizontalLayout.addComponent(tblpointstoexclude);
+		HorizontalLayout.addComponent(txterror);
+		txterror.setVisible(false);
+		fl.addComponent(HorizontalLayout);
+
+		fl.addComponent(tblsourcensinks);
+		fl.addComponent(txtfldSnSFile);
+		fl.addComponent(uploadSnSfile);
+		// fl.addComponent(txterror);
+		fl.addComponent(chkmultithreaded);
+		fl.addComponent(chksensitiveness);
+		fl.addComponent(chkindirectflows);
+		fl.addComponent(chkcomputechops);
+		fl.addComponent(chkSystemOut);
+		fl.addComponent(btnsave);
+		fl.addComponent(btnrun);
+
+		fl.setMargin(true);
+		// assign values to global variables
+		analysisname = txtfldname.getValue();
+		modvalue = (String) cmbmode.getValue();
+		ignoreindirectflowvalue = chkindirectflows.getValue();
+		multhithreaded = chkmultithreaded.getValue();
+		computechopsvalue = chkcomputechops.getValue();
+		objectsensitivevalue = chksensitiveness.getValue();
+		snsfilevalue = txtfldSnSFile.getValue();
+
+		// assigning values ends
+
+		pnltables.setContent(fl);
+		fl.setSizeUndefined();
+		pnltables.getContent().setSizeUndefined();
+		pnltables.setScrollLeft(6);
+
+		vlayoutmenu.setSizeFull();
+		vlayoutmenu.setMargin(true);
+
+		hlayoutcore.addComponent(vlayoutmenu);
+		hlayoutcore.addComponent(pnltables);
+		Button buttonnam = new Button(buttonname);
+		
+		this.setSpacing(true);
+
+		addStyleName("backColorGrey");
+
+		addComponent(horiprevnext);
+		addComponent(hlayoutcore);
+
+		GridLayout childgrid = new GridLayout(4, 8);
+
+		childgrid.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
+
+		
+
+		childgrid.addComponent(btnselectsnsFile, 1, 7, 1, 7);
+		
+    }
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+ private void fillStaticAnalysisTextboxes(String Appname)
+ {
+	 DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder;
+		try {
+			docBuilder = docBuilderFactory.newDocumentBuilder();
+			 File appFolder = new File(relativepath+strBaseFolders+Appname);
+		       String  applicationfolder=relativepath+strBaseFolders+Appname;
+				String[] names = appFolder.list();
+				File[] folderlist=appFolder.listFiles();
+				
+		        List<String> listReportfiles=new ArrayList<>();
+		        List<File> listReportfiles1=new ArrayList<>();
+		        if(Appname!=null)
+		        {
+				 for(File name : folderlist)
+				 {
+				     if (name.isDirectory())
+				     {
+				    	String temp=name.getName();
+				    	String temp1=temp;
+				    	 if( !(temp.equals("Source")))
+				    	 listReportfiles1.add(name);   
+				    	
+				     }
+				 }
+				 Collections.sort(listReportfiles1, new Comparator<File>(){
+					    public int compare(File f1, File f2)
+					    {
+					        return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+					    } });
+		        }
+		        String reportfilepath=listReportfiles1.get(0).getAbsolutePath()+"/StaticAnalysis.xml";
+		
+		Document doc = docBuilder.parse(new File(reportfilepath));
+		doc.getDocumentElement().normalize();
+		
+		NodeList listOffile = doc.getElementsByTagName("analysis");
+		Element AppNameElement = (Element) listOffile.item(0);
+		
+		txtfldname.setValue(AppNameElement.getAttribute("name"));
+		int totalFile = listOffile.getLength();
+		
+		for (int s = 0; s < listOffile.getLength(); s++) {
+
+			Node FileNode = listOffile.item(s);
+			if (FileNode.getNodeType() == Node.ELEMENT_NODE) {
+
+				Element FileElement = (Element) FileNode;
+
+				
+				NodeList NameList = FileElement.getElementsByTagName("mode");
+				Element NameElement = (Element) NameList.item(0);		
+				cmbmode.setValue(NameElement.getAttribute("value"));
+				
+				NodeList ClasspathlistList = FileElement.getElementsByTagName("classpath");
+				Element ClasspathElement = (Element) ClasspathlistList.item(0);	
+				TextField txt = new TextField("textfield");
+				txt.setValue(ClasspathElement.getAttribute("value"));
+				txt.setWidth(24.6f, ComboBox.UNITS_EM);
+				Object newItemId = gridclasspath.addItem();
+				Item row = gridclasspath.getItem(newItemId);
+				row.getItemProperty("Classpath").setValue(txt);
+				gridclasspath.addItem(new Object[] { txt }, newItemId);
+				
+				NodeList ThirdPartyLibList = FileElement.getElementsByTagName("thirdPartyLibs");
+				Element ThirdPartyLibElement = (Element) ThirdPartyLibList.item(0);		
+				TextField txttpl = new TextField("textfield");
+				txttpl.setValue(ThirdPartyLibElement.getAttribute("value"));
+				txttpl.setWidth(24.6f, ComboBox.UNITS_EM);
+				Object newItemIdtpl = tblthirdpartylib.addItem();
+				 Item rowtpl = tblthirdpartylib.getItem(newItemIdtpl);
+				 rowtpl.getItemProperty("ThirdPartyLibrary").setValue(txttpl);
+				tblthirdpartylib.addItem(new Object[] { txttpl }, newItemIdtpl);
+				
+				NodeList StubList = FileElement.getElementsByTagName("stubs");
+				if(StubList!=null)
+				{
+				Element StubElement = (Element) StubList.item(0);		
+				cmbstub.setValue(StubElement.getAttribute("value"));
+				}
+				NodeList EntryPointList = FileElement.getElementsByTagName("entrypoint");
+				if(EntryPointList!=null)
+				{
+				Element EntryPointElement = (Element) EntryPointList.item(0);		
+				txtfldEntryPoint.setValue((EntryPointElement.getAttribute("value")));
+				}
+				
+				NodeList IndirectList = FileElement.getElementsByTagName("ignoreIndirectFlows");
+				if(IndirectList!=null)
+				{
+				Element IndirectElement = (Element) IndirectList.item(0);					
+				chkindirectflows.setValue( Boolean.valueOf(IndirectElement.getAttribute("value")));
+				}
+				
+				NodeList sdgList = FileElement.getElementsByTagName("sdgfile");
+				
+				Element sdgElement = (Element) sdgList.item(0);		
+				txtSDGFile.setValue((sdgElement.getAttribute("value")));
+				NodeList logList = FileElement.getElementsByTagName("logFile");
+				if(logList!=null)
+				{
+				Element logElement = (Element) logList.item(0);		
+				txtlogFile.setValue((logElement.getAttribute("value")));
+				NodeList cgfileList = FileElement.getElementsByTagName("cgfile");
+				Element cgfileElement = (Element) cgfileList.item(0);		
+				txtCGFile.setValue((cgfileElement.getAttribute("value")));
+				}
+				NodeList reportList = FileElement.getElementsByTagName("reportfile");
+				if(reportList!=null){
+				Element reportElement = (Element) reportList.item(0);		
+				txtReportFile.setValue((reportElement.getAttribute("value")));}
+				NodeList chopsList = FileElement.getElementsByTagName("computeChops");
+				if(chopsList!=null)
+				{
+				Element chopsElement = (Element) chopsList.item(0);		
+				chkcomputechops.setValue((Boolean.valueOf(chopsElement.getAttribute("value"))));
+				}
+				NodeList sysoutList = FileElement.getElementsByTagName("systemout");
+				if(sysoutList!=null)
+				{
+				Element sysoutElement = (Element) sysoutList.item(0);					
+				chkSystemOut.setValue( Boolean.valueOf(sysoutElement.getAttribute("value")));
+				}
+				
+				NodeList sensitivenessList = FileElement.getElementsByTagName("objectsensitivenes");
+				if(sensitivenessList!=null)
+				{
+				Element sensitivenessElement = (Element) sensitivenessList.item(0);	
+				chksensitiveness.setValue((Boolean.valueOf(sensitivenessElement.getAttribute("value"))));	
+				}
+				
+			
+
+			} 
+
+		} 
+		
+		}
+		 catch (ParserConfigurationException | SAXException | IOException e) 
+		{
+		System.out.println(e.getLocalizedMessage()+e.getMessage());		
+		}
+ }
+    
+    
+
 }

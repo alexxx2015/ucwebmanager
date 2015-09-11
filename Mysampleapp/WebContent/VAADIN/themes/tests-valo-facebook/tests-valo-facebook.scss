@@ -25,6 +25,13 @@ $v-selection-item-border-radius: 0;
 
 @mixin tests-valo-facebook {
   @include valo;
+  .NoSpacing
+  {
+    .v-vertical > .v-spacing 
+    {
+    height: 00px;
+    }
+  }
 
   // Insert your own theme rules here
 }

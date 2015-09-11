@@ -12378,3 +12378,7 @@ div.v-layout.v-horizontal.v-widget {
 	width: 15px;
 	overflow: hidden;
 }
+
+.tests-valo-facebook .NoSpacing .v-vertical > .v-spacing {
+	height: 0px;
+}
