@@ -128,7 +128,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 		this.mainObj = o;
 
 		try {
-			//InitialiseUIComponents();
+			InitialiseUIComponents();
 			final Subwindow subwin = new Subwindow();
 			prop.load(inputStream);
 			output = new FileOutputStream("config.properties");
@@ -554,7 +554,7 @@ public class Main extends VerticalLayout implements View, Receiver,
 			public void buttonClick(ClickEvent event) {
 				// subWindow.close();
 				try {
-
+					
 					TextField tempClass = new TextField();
 					TextField txtTypes = new TextField();
 					TextField tempSelector = new TextField();

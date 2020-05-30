@@ -33,7 +33,7 @@
 		<multithreaded value="true|false" />
 
 		<!-- specify points-to precision. For possible values of <policy>, refer 
-			to edu.kit.joana.wala.core.SDGBuilder.PointsToPrecision !-- Special behaviour 
+			to edu.kit.joana.wala.core.SDGBuilder.PointsToPrecision ! - - Special behaviour 
 			for <policy>=OBJECT_SENSITIVE: - handle classes object-sensitively, whose 
 			name match one of the java-style regexes given in the <include-classes> tags 
 			and none of the regexes given in the <exclude-classes> tags - specify fallback 

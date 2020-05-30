@@ -269,28 +269,19 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 				switch (value) {
 				case "Static Analysis":
 					System.out.println(value + "Yeah");
-
 					mainObj.navigator.navigateTo("Main/" + filename);
 					break;
 				case "Instrumentation":
-					
-
 					mainObj.navigator.navigateTo("Instrumentation/" + filename);
-
 					break;
 				case "Runtime Analysis":
-					
-					mainObj.navigator.navigateTo("Runtime/" + filename);// not
-																		// working
-																		// this
-																		// navigation
-					
+					mainObj.navigator.navigateTo("Runtime/" + filename);// not working this navigation
+					break;
 				}
 
 			} catch (Exception e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
-				System.out.println(e1.getMessage());
 			}
 		}));
 		gridmain.getColumn("Stop").setRenderer(new ButtonRenderer(e -> {
@@ -306,7 +297,6 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 			} catch (Exception e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
-				System.out.println(e1.getMessage());
 			}
 		}));
 
@@ -396,11 +386,6 @@ public class NextPage extends VerticalLayout implements View, Receiver, Succeede
 
 			}
 		});
-
-		
-		
-		
-
 	}
 
 	public Field<?> getComboBox(String requiredErrorMsg, List<String> items) {
